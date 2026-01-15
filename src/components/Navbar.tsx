@@ -1,10 +1,18 @@
-import { ShoppingCart, User, Menu } from "lucide-react";
+import { ShoppingCart, User, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -35,10 +43,24 @@ const Navbar = () => {
           <Button variant="ghost" size="icon">
             <ShoppingCart className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </Button>
-          <Button variant="gradient">Sign In</Button>
+          
+          {user ? (
+            <>
+              <Link to="/profile">
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Button variant="outline" onClick={handleSignOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button variant="gradient">Sign In</Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -66,9 +88,26 @@ const Navbar = () => {
               Sell
             </Link>
             <div className="flex gap-2 pt-2">
-              <Button variant="gradient" className="flex-1">
-                Sign In
-              </Button>
+              {user ? (
+                <>
+                  <Link to="/profile" className="flex-1">
+                    <Button variant="outline" className="w-full gap-2">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Button>
+                  </Link>
+                  <Button variant="gradient" onClick={handleSignOut} className="flex-1 gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Link to="/auth" className="flex-1">
+                  <Button variant="gradient" className="w-full">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
