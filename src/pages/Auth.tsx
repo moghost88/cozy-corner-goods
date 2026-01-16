@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Mail, Lock, User, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import logo from "@/assets/logo.jpeg";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
@@ -23,8 +25,11 @@ const Auth = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string; displayName?: string }>({});
   
   const { signIn, signUp } = useAuth();
+  const { t, dir } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
 
   const validateForm = () => {
     try {
@@ -62,21 +67,21 @@ const Auth = () => {
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
             toast({
-              title: "Login failed",
-              description: "Invalid email or password. Please try again.",
+              title: t("auth.loginFailed"),
+              description: t("auth.invalidCredentials"),
               variant: "destructive",
             });
           } else {
             toast({
-              title: "Login failed",
+              title: t("auth.loginFailed"),
               description: error.message,
               variant: "destructive",
             });
           }
         } else {
           toast({
-            title: "Welcome back!",
-            description: "You have successfully logged in.",
+            title: t("auth.welcomeBackToast"),
+            description: t("auth.successLogin"),
           });
           navigate("/");
         }
@@ -85,21 +90,21 @@ const Auth = () => {
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
-              title: "Account exists",
-              description: "An account with this email already exists. Please sign in instead.",
+              title: t("auth.accountExists"),
+              description: t("auth.accountExists"),
               variant: "destructive",
             });
           } else {
             toast({
-              title: "Sign up failed",
+              title: t("auth.signUpFailed"),
               description: error.message,
               variant: "destructive",
             });
           }
         } else {
           toast({
-            title: "Account created!",
-            description: "Welcome to cookingmarketplace!",
+            title: t("auth.accountCreated"),
+            description: t("auth.welcomeToStore"),
           });
           navigate("/");
         }
@@ -124,41 +129,37 @@ const Auth = () => {
             to="/"
             className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            <BackArrow className="h-4 w-4" />
+            {t("auth.backToHome")}
           </Link>
 
           {/* Card */}
           <div className="rounded-3xl border border-border bg-card p-8 shadow-card">
             {/* Logo */}
-            <div className="mb-6 flex items-center justify-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-hero">
-                <span className="text-2xl font-bold text-primary-foreground">C</span>
-              </div>
+            <div className="mb-6 flex items-center justify-center">
+              <img src={logo} alt="معرض الطباخ" className="h-16 w-16 rounded-xl object-contain" />
             </div>
 
             <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
-              {isLogin ? "Welcome back" : "Create account"}
+              {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
             </h1>
             <p className="mb-8 text-center text-muted-foreground">
-              {isLogin
-                ? "Sign in to access your purchases"
-                : "Sign up to start shopping"}
+              {isLogin ? t("auth.signInSubtitle") : t("auth.signUpSubtitle")}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
+                  <Label htmlFor="displayName">{t("auth.displayName")}</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="displayName"
                       type="text"
-                      placeholder="Your name"
+                      placeholder={t("auth.displayNamePlaceholder")}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="pl-10"
+                      className="ps-10"
                     />
                   </div>
                   {errors.displayName && (
@@ -168,16 +169,16 @@ const Auth = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="ps-10"
                     required
                   />
                 </div>
@@ -187,16 +188,16 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={t("auth.passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="ps-10"
                     required
                   />
                 </div>
@@ -215,12 +216,12 @@ const Auth = () => {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isLogin ? "Signing in..." : "Creating account..."}
+                    {isLogin ? t("auth.signingIn") : t("auth.creatingAccount")}
                   </>
                 ) : isLogin ? (
-                  "Sign In"
+                  t("auth.signIn")
                 ) : (
-                  "Create Account"
+                  t("auth.createAccount")
                 )}
               </Button>
             </form>
@@ -234,9 +235,7 @@ const Auth = () => {
                 }}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : "Already have an account? Sign in"}
+                {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
               </button>
             </div>
           </div>

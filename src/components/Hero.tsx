@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HeroProps {
   searchQuery: string;
@@ -8,6 +9,15 @@ interface HeroProps {
 }
 
 const Hero = ({ searchQuery, onSearchChange }: HeroProps) => {
+  const { t } = useLanguage();
+
+  const popularTags = [
+    { key: "hero.tag.mealPrep", search: "Meal Prep" },
+    { key: "hero.tag.organization", search: "Organization" },
+    { key: "hero.tag.cleaningHacks", search: "Cleaning" },
+    { key: "hero.tag.sleepBetter", search: "Sleep" },
+  ];
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-muted/50 to-background pb-16 pt-12">
       {/* Background decorations */}
@@ -26,50 +36,48 @@ const Hero = ({ searchQuery, onSearchChange }: HeroProps) => {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-accent"></span>
             </span>
             <span className="text-sm font-medium text-foreground">
-              Over 500+ digital products available
+              {t("hero.badge")}
             </span>
           </div>
 
           {/* Headline */}
           <h1 className="mb-6 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            Your Home, <span className="text-gradient-hero">Elevated</span>
+            {t("hero.title")} <span className="text-primary">{t("hero.titleHighlight")}</span>
           </h1>
 
           <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
-            Discover premium digital guides, templates, and resources for kitchen, cleaning, and bedroom organization.
+            {t("hero.description")}
           </p>
 
           {/* Search Bar */}
           <div className="relative mx-auto max-w-xl">
             <div className="relative flex items-center overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-shadow focus-within:shadow-card-hover">
-              <Search className="ml-4 h-5 w-5 text-muted-foreground" />
+              <Search className="mx-4 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search for digital products..."
+                placeholder={t("hero.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="flex-1 border-0 bg-transparent py-6 text-base focus-visible:ring-0"
               />
-              <Button variant="gradient" className="mr-2">
-                Search
+              <Button variant="gradient" className="mx-2">
+                {t("hero.search")}
               </Button>
             </div>
           </div>
 
           {/* Popular tags */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-sm text-muted-foreground">Popular:</span>
-            {["Meal Prep", "Organization", "Cleaning Hacks", "Sleep Better"].map(
-              (tag) => (
-                <button
-                  key={tag}
-                  onClick={() => onSearchChange(tag)}
-                  className="rounded-full border border-border bg-background px-3 py-1 text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/5"
-                >
-                  {tag}
-                </button>
-              )
-            )}
+            <span className="text-sm text-muted-foreground">{t("hero.popular")}</span>
+            {popularTags.map((tag) => (
+              <button
+                key={tag.key}
+                onClick={() => onSearchChange(tag.search)}
+                className="rounded-full border border-border bg-background px-3 py-1 text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/5"
+              >
+                {t(tag.key)}
+              </button>
+            ))}
           </div>
         </div>
       </div>

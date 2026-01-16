@@ -6,10 +6,12 @@ import ProductCard from "@/components/ProductCard";
 import CreatorSpotlight from "@/components/CreatorSpotlight";
 import Footer from "@/components/Footer";
 import { products, Category } from "@/data/products";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const { t } = useLanguage();
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -33,10 +35,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
             <h2 className="font-display text-3xl font-bold text-foreground">
-              Explore <span className="text-gradient-hero">Products</span>
+              {t("products.title")} <span className="text-primary">{t("products.titleHighlight")}</span>
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Find the perfect digital resources for your home
+              {t("products.subtitle")}
             </p>
           </div>
 
@@ -56,7 +58,7 @@ const Index = () => {
           ) : (
             <div className="py-16 text-center">
               <p className="text-lg text-muted-foreground">
-                No products found matching your criteria.
+                {t("products.noResults")}
               </p>
             </div>
           )}

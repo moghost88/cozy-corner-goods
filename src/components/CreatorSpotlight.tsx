@@ -2,9 +2,11 @@ import { ChevronLeft, ChevronRight, ShoppingBag, TrendingUp } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { creators } from "@/data/products";
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const CreatorSpotlight = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { t, dir } = useLanguage();
 
   const nextCreator = () => {
     setCurrentIndex((prev) => (prev + 1) % creators.length);
@@ -20,10 +22,10 @@ const CreatorSpotlight = () => {
         <div className="mb-10 flex items-center justify-between">
           <div>
             <h2 className="font-display text-3xl font-bold text-foreground">
-              Creator <span className="text-gradient-hero">Spotlight</span>
+              {t("creator.title")} <span className="text-primary">{t("creator.titleHighlight")}</span>
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Meet the experts behind our best-selling products
+              {t("creator.subtitle")}
             </p>
           </div>
 
@@ -31,7 +33,7 @@ const CreatorSpotlight = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={prevCreator}
+              onClick={dir === "rtl" ? nextCreator : prevCreator}
               className="rounded-full"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -39,7 +41,7 @@ const CreatorSpotlight = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={nextCreator}
+              onClick={dir === "rtl" ? prevCreator : nextCreator}
               className="rounded-full"
             >
               <ChevronRight className="h-5 w-5" />
@@ -51,7 +53,7 @@ const CreatorSpotlight = () => {
         <div className="relative overflow-hidden">
           <div
             className="flex gap-6 transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            style={{ transform: `translateX(${dir === "rtl" ? "" : "-"}${currentIndex * 100}%)` }}
           >
             {creators.map((creator, index) => (
               <div
@@ -60,20 +62,20 @@ const CreatorSpotlight = () => {
               >
                 <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:shadow-card-hover">
                   {/* Decorative gradient */}
-                  <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-hero opacity-10 blur-2xl transition-opacity group-hover:opacity-20" />
+                  <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 opacity-10 blur-2xl transition-opacity group-hover:opacity-20" />
 
                   <div className="relative">
                     {/* Avatar */}
                     <div className="mb-4 flex items-start gap-4">
                       <div className="relative">
-                        <div className="h-16 w-16 rounded-2xl bg-gradient-hero p-0.5">
+                        <div className="h-16 w-16 rounded-2xl bg-primary p-0.5">
                           <div className="flex h-full w-full items-center justify-center rounded-2xl bg-card">
                             <span className="font-display text-xl font-bold text-primary">
                               {creator.name.charAt(0)}
                             </span>
                           </div>
                         </div>
-                        <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-card bg-secondary" />
+                        <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-card bg-green-500" />
                       </div>
 
                       <div className="flex-1">
@@ -91,20 +93,20 @@ const CreatorSpotlight = () => {
                       <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
                         <ShoppingBag className="h-4 w-4 text-primary" />
                         <span className="text-sm font-medium text-foreground">
-                          {creator.products} Products
+                          {creator.products} {t("creator.products")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-                        <TrendingUp className="h-4 w-4 text-secondary" />
+                        <TrendingUp className="h-4 w-4 text-green-500" />
                         <span className="text-sm font-medium text-foreground">
-                          {creator.sales.toLocaleString()} Sales
+                          {creator.sales.toLocaleString()} {t("creator.sales")}
                         </span>
                       </div>
                     </div>
 
                     {/* CTA */}
                     <Button variant="outline" className="mt-4 w-full">
-                      View Profile
+                      {t("creator.viewProfile")}
                     </Button>
                   </div>
                 </div>
