@@ -1,6 +1,7 @@
 import { Grid3X3, ChefHat, Sparkles, Bed } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Category, categories } from "@/data/products";
+import { Category } from "@/data/products";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CategoryFilterProps {
   activeCategory: Category;
@@ -14,10 +15,19 @@ const iconMap = {
   Bed,
 };
 
+const categoryConfig = [
+  { id: "all", icon: "Grid3X3", translationKey: "category.all" },
+  { id: "kitchen", icon: "ChefHat", translationKey: "category.kitchen" },
+  { id: "cleaning", icon: "Sparkles", translationKey: "category.cleaning" },
+  { id: "bedroom", icon: "Bed", translationKey: "category.bedroom" },
+];
+
 const CategoryFilter = ({ activeCategory, onCategoryChange }: CategoryFilterProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="flex flex-wrap justify-center gap-3">
-      {categories.map((category) => {
+      {categoryConfig.map((category) => {
         const Icon = iconMap[category.icon as keyof typeof iconMap];
         const isActive = activeCategory === category.id;
 
@@ -38,7 +48,7 @@ const CategoryFilter = ({ activeCategory, onCategoryChange }: CategoryFilterProp
                 isActive && "animate-pulse"
               )}
             />
-            {category.name}
+            {t(category.translationKey)}
           </button>
         );
       })}
