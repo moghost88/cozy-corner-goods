@@ -41,7 +41,7 @@ const Navbar = () => {
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={t("nav.searchPlaceholder") || "Search products..."}
+              placeholder={t("search here") || "Search products..."}
               className="w-full rounded-full border-border bg-muted/50 pl-10 focus:bg-background"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -50,9 +50,12 @@ const Navbar = () => {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          <Link to="/seller">
+            <Button variant="ghost" className="text-sm font-medium">Sell</Button>
+          </Link>
           <LanguageToggle />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)} aria-label={`Cart with ${cartCount} items`}>
             <ShoppingCart className="h-5 w-5" />
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -61,16 +64,16 @@ const Navbar = () => {
             )}
           </Button>
 
-          <Link to="/wishlist">
-            <Button variant="ghost" size="icon">
+          <Link to="/wishlist" aria-label="View Wishlist">
+            <Button variant="ghost" size="icon" aria-label="Wishlist">
               <Heart className="h-5 w-5" />
             </Button>
           </Link>
 
           {user ? (
             <>
-              <Link to="/profile">
-                <Button variant="ghost" size="icon">
+              <Link to="/profile" aria-label="View Profile">
+                <Button variant="ghost" size="icon" aria-label="Profile">
                   <User className="h-5 w-5" />
                 </Button>
               </Link>
@@ -94,6 +97,7 @@ const Navbar = () => {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -112,6 +116,9 @@ const Navbar = () => {
             </Link>
             <Link to="/" className="text-sm font-medium text-muted-foreground">
               {t("nav.contact")}
+            </Link>
+            <Link to="/seller" className="text-sm font-medium text-muted-foreground">
+              Sell on Cozy Corner
             </Link>
             <div className="flex gap-2 pt-2">
               {user ? (

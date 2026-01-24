@@ -30,7 +30,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    const handler = setTimeout(() => {
+      localStorage.setItem('cart', JSON.stringify(items));
+    }, 500);
+    return () => clearTimeout(handler);
   }, [items]);
 
   const addToCart = (product: Product) => {

@@ -41,19 +41,20 @@ const Footer = () => {
               {t("footer.description")}
             </p>
             <div className="flex gap-3">
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Twitter">
                 <Twitter className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Instagram">
                 <Instagram className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="YouTube">
                 <Youtube className="h-4 w-4" />
               </Button>
               <a
                 href="https://wa.me/1234567890"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
               >
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30">
                   <MessageCircle className="h-4 w-4" />
@@ -114,7 +115,7 @@ const Footer = () => {
                 placeholder={t("footer.emailPlaceholder")}
                 className="rounded-xl"
               />
-              <Button variant="gradient" className="rounded-xl">
+              <Button variant="gradient" className="rounded-xl" aria-label="Subscribe to newsletter">
                 <Mail className="h-4 w-4" />
               </Button>
             </div>

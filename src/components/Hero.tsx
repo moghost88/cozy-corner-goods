@@ -3,13 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-interface HeroProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-}
+import { useFilter } from "@/contexts/FilterContext";
 
-const Hero = ({ searchQuery, onSearchChange }: HeroProps) => {
+const Hero = () => {
   const { t } = useLanguage();
+  const { setSearchQuery } = useFilter();
 
   const popularTags = [
     { key: "hero.tag.mealPrep", search: "Meal Prep" },
@@ -49,21 +47,14 @@ const Hero = ({ searchQuery, onSearchChange }: HeroProps) => {
             {t("hero.description")}
           </p>
 
-          {/* Search Bar */}
-          <div className="relative mx-auto max-w-xl">
-            <div className="relative flex items-center overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-shadow focus-within:shadow-card-hover">
-              <Search className="mx-4 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("hero.searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="flex-1 border-0 bg-transparent py-6 text-base focus-visible:ring-0"
-              />
-              <Button variant="gradient" className="mx-2">
-                {t("hero.search")}
-              </Button>
-            </div>
+          {/* Search Bar Removed - Moved to Navbar */}
+          <div className="flex justify-center gap-4">
+            <Button variant="gradient" size="lg" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
+              Shop Now
+            </Button>
+            <Button variant="outline" size="lg">
+              Become a Seller
+            </Button>
           </div>
 
           {/* Popular tags */}
@@ -72,7 +63,7 @@ const Hero = ({ searchQuery, onSearchChange }: HeroProps) => {
             {popularTags.map((tag) => (
               <button
                 key={tag.key}
-                onClick={() => onSearchChange(tag.search)}
+                onClick={() => setSearchQuery(tag.search)}
                 className="rounded-full border border-border bg-background px-3 py-1 text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/5"
               >
                 {t(tag.key)}

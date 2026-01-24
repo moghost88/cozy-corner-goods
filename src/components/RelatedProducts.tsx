@@ -24,10 +24,8 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
         <div className="space-y-6">
             <h2 className="font-display text-2xl font-bold">You might also like</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {relatedItems.map((product, index) => (
-                    <div key={product.id} className="scale-90 opacity-90 transition-all hover:scale-100 hover:opacity-100">
-                        <ProductCard product={product} index={index} />
-                    </div>
+                {relatedItems.slice(0, 4).map((product, index) => (
+                    <ProductCard key={product.id} product={product} index={index} />
                 ))}
             </div>
         </div>

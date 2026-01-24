@@ -23,6 +23,10 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         <img
           src={product.image}
           alt={product.name}
+          width="400"
+          height="300"
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 
@@ -38,6 +42,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }
           }}
           className="absolute right-3 top-3 z-10 rounded-full bg-background/80 p-2 backdrop-blur-sm transition-all hover:bg-background"
+          aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart
             className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`}

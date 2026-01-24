@@ -17,6 +17,7 @@ export interface Product {
   rating: number;
   downloads: number;
   featured?: boolean;
+  date: string;
 }
 
 export interface Creator {
@@ -41,6 +42,7 @@ export const products: Product[] = [
     rating: 4.9,
     downloads: 2340,
     featured: true,
+    date: "2024-01-15T10:00:00Z"
   },
   {
     id: "2",
@@ -53,6 +55,7 @@ export const products: Product[] = [
     creatorAvatar: "/placeholder.svg",
     rating: 4.8,
     downloads: 1890,
+    date: "2024-01-20T14:30:00Z"
   },
   {
     id: "3",
@@ -66,6 +69,7 @@ export const products: Product[] = [
     rating: 4.7,
     downloads: 3210,
     featured: true,
+    date: "2023-12-10T09:15:00Z"
   },
   {
     id: "4",
@@ -78,6 +82,7 @@ export const products: Product[] = [
     creatorAvatar: "/placeholder.svg",
     rating: 4.9,
     downloads: 1567,
+    date: "2024-02-01T16:45:00Z"
   },
   {
     id: "5",
@@ -90,6 +95,7 @@ export const products: Product[] = [
     creatorAvatar: "/placeholder.svg",
     rating: 4.8,
     downloads: 987,
+    date: "2024-01-05T11:20:00Z"
   },
   {
     id: "6",
@@ -103,6 +109,7 @@ export const products: Product[] = [
     rating: 4.6,
     downloads: 2100,
     featured: true,
+    date: "2024-02-15T13:00:00Z"
   },
   {
     id: "7",
@@ -115,6 +122,7 @@ export const products: Product[] = [
     creatorAvatar: "/placeholder.svg",
     rating: 4.5,
     downloads: 1234,
+    date: "2023-11-20T15:30:00Z"
   },
   {
     id: "8",
@@ -127,6 +135,7 @@ export const products: Product[] = [
     creatorAvatar: "/placeholder.svg",
     rating: 4.7,
     downloads: 1876,
+    date: "2024-01-25T09:00:00Z"
   },
 ];
 
