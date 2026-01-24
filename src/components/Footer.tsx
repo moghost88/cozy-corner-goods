@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Twitter, Instagram, Youtube } from "lucide-react";
+import { Mail, Twitter, Instagram, Youtube, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -50,6 +50,15 @@ const Footer = () => {
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Youtube className="h-4 w-4" />
               </Button>
+              <a
+                href="https://wa.me/1234567890"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30">
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </a>
             </div>
           </div>
 

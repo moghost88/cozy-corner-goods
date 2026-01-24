@@ -5,10 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import ReviewList from "@/components/reviews/ReviewList";
+import RelatedProducts from "@/components/RelatedProducts";
+
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const product = products.find((p) => p.id === id);
+  const { addToCart } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
   if (!product) {
     return (
@@ -53,9 +60,9 @@ const ProductDetail = () => {
         <div className="grid gap-10 lg:grid-cols-2">
           {/* Product Preview */}
           <div className="relative">
-          <div className="sticky top-24">
+            <div className="sticky top-24">
               <div className="aspect-square overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
-                <img 
+                <img
                   src={product.image}
                   alt={product.name}
                   className="h-full w-full object-cover"
@@ -70,8 +77,19 @@ const ProductDetail = () => {
 
               {/* Action buttons */}
               <div className="absolute right-4 top-4 flex gap-2">
-                <Button variant="secondary" size="icon" className="rounded-full bg-card/80 backdrop-blur-sm">
-                  <Heart className="h-4 w-4" />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full bg-card/80 backdrop-blur-sm"
+                  onClick={() => {
+                    if (isInWishlist(product.id)) {
+                      removeFromWishlist(product.id);
+                    } else {
+                      addToWishlist(product);
+                    }
+                  }}
+                >
+                  <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : ""}`} />
                 </Button>
                 <Button variant="secondary" size="icon" className="rounded-full bg-card/80 backdrop-blur-sm">
                   <Share2 className="h-4 w-4" />
@@ -148,9 +166,14 @@ const ProductDetail = () => {
                 </span>
               </div>
 
-              <Button variant="hero" size="xl" className="mb-3 w-full gap-2">
+              <Button
+                variant="hero"
+                size="xl"
+                className="mb-3 w-full gap-2"
+                onClick={() => addToCart(product)}
+              >
                 <ShoppingCart className="h-5 w-5" />
-                Buy Now
+                Add to Cart
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
@@ -159,6 +182,11 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="container mx-auto mt-16 px-4 pb-16 space-y-16">
+        <RelatedProducts currentProductId={product.id} category={product.category} />
+        <ReviewList productId={product.id} />
       </div>
 
       <Footer />

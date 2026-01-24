@@ -1,18 +1,25 @@
-import { ShoppingCart, User, Menu, LogOut } from "lucide-react";
+import { ShoppingCart, User, Menu, LogOut, Heart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFilter } from "@/contexts/FilterContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
+import { useCart } from "@/contexts/CartContext";
+import CartSheet from "@/components/CartSheet";
 import logo from "@/assets/logo.jpeg";
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
+  const { searchQuery, setSearchQuery } = useFilter();
+
   const navigate = useNavigate();
+  const { cartCount, setIsCartOpen } = useCart();
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,25 +37,36 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-6 md:flex">
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {t("nav.browse")}
-          </Link>
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {t("nav.products")}
-          </Link>
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            {t("nav.contact")}
-          </Link>
+        <div className="hidden flex-1 items-center justify-center px-8 md:flex">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={t("nav.searchPlaceholder") || "Search products..."}
+              className="w-full rounded-full border-border bg-muted/50 pl-10 focus:bg-background"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
           <LanguageToggle />
           <ThemeToggle />
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {cartCount}
+              </span>
+            )}
           </Button>
-          
+
+          <Link to="/wishlist">
+            <Button variant="ghost" size="icon">
+              <Heart className="h-5 w-5" />
+            </Button>
+          </Link>
+
           {user ? (
             <>
               <Link to="/profile">
@@ -120,6 +138,8 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
+      <CartSheet />
     </nav>
   );
 };
