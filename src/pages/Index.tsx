@@ -5,7 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import CreatorSpotlight from "@/components/CreatorSpotlight";
 import Footer from "@/components/Footer";
 import FilterSidebar from "@/components/FilterSidebar";
-import { products } from "@/data/products";
+import { products, categories } from "@/data/products";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFilter } from "@/contexts/FilterContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,7 +14,7 @@ import { SlidersHorizontal } from "lucide-react";
 
 const Index = () => {
   const { t } = useLanguage();
-  const { searchQuery, category, priceRange, minRating, sortBy } = useFilter();
+  const { searchQuery, category, subcategory, minRating, sortBy } = useFilter();
 
   const filteredProducts = useMemo(() => {
     return products
@@ -27,14 +27,13 @@ const Index = () => {
         // Category Filter
         const matchesCategory = category === "all" || product.category === category;
 
-        // Price Filter
-        const matchesPrice =
-          product.price >= priceRange[0] && product.price <= priceRange[1];
+        // Subcategory Filter
+        const matchesSubcategory = subcategory === "all" || product.subcategory === subcategory;
 
         // Rating Filter
         const matchesRating = product.rating >= minRating;
 
-        return matchesSearch && matchesCategory && matchesPrice && matchesRating;
+        return matchesSearch && matchesCategory && matchesSubcategory && matchesRating;
       })
       .sort((a, b) => {
         if (sortBy === "price-asc") return a.price - b.price;
@@ -42,7 +41,7 @@ const Index = () => {
         if (sortBy === "newest") return new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
         return 0; // featured/default
       });
-  }, [searchQuery, category, priceRange, minRating, sortBy]);
+  }, [searchQuery, category, subcategory, minRating, sortBy]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +82,17 @@ const Index = () => {
               <div className="flex-1">
                 <div className="mb-6">
                   <h2 className="font-display text-3xl font-bold text-foreground">
-                    {category === "all" ? t("products.title") : category}
+                    {category === "all"
+                      ? t("products.title")
+                      : (categories.find(c => c.id === category)?.name || category)
+                    }
+                    {category !== "all" && subcategory !== "all" && (
+                      <span className="text-muted-foreground whitespace-pre">
+                        {" > "}{
+                          (categories.find(c => c.id === category) as any)?.subcategories?.find((s: any) => s.id === subcategory)?.name
+                        }
+                      </span>
+                    )}
                     <span className="text-primary ml-2">
                       ({filteredProducts.length})
                     </span>

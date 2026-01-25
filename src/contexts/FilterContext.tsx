@@ -6,7 +6,7 @@ type SortOption = "featured" | "price-asc" | "price-desc" | "newest";
 interface FilterState {
     searchQuery: string;
     category: string;
-    priceRange: [number, number];
+    subcategory: string;
     minRating: number;
     sortBy: SortOption;
 }
@@ -14,7 +14,7 @@ interface FilterState {
 interface FilterContextType extends FilterState {
     setSearchQuery: (query: string) => void;
     setCategory: (category: string) => void;
-    setPriceRange: (range: [number, number]) => void;
+    setSubcategory: (subcategory: string) => void;
     setMinRating: (rating: number) => void;
     setSortBy: (sort: SortOption) => void;
     resetFilters: () => void;
@@ -25,14 +25,14 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined);
 export const FilterProvider = ({ children }: { children: ReactNode }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [category, setCategory] = useState("all");
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+    const [subcategory, setSubcategory] = useState("all");
     const [minRating, setMinRating] = useState(0);
     const [sortBy, setSortBy] = useState<SortOption>("featured");
 
     const resetFilters = () => {
         setSearchQuery("");
         setCategory("all");
-        setPriceRange([0, 1000]);
+        setSubcategory("all");
         setMinRating(0);
         setSortBy("featured");
     };
@@ -44,8 +44,8 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
                 setSearchQuery,
                 category,
                 setCategory,
-                priceRange,
-                setPriceRange,
+                subcategory,
+                setSubcategory,
                 minRating,
                 setMinRating,
                 sortBy,

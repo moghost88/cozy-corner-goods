@@ -3,7 +3,7 @@ import mealPrepImage from "@/assets/product-meal-prep.jpg";
 import cleaningImage from "@/assets/product-cleaning.jpg";
 import bedroomImage from "@/assets/product-bedroom.jpg";
 
-export type Category = "all" | "kitchen" | "cleaning" | "bedroom";
+export type Category = "all" | "kitchen-tools" | "home-decor" | "cleaning-supplies";
 
 export interface Product {
   id: string;
@@ -11,6 +11,7 @@ export interface Product {
   description: string;
   price: number;
   category: Category;
+  subcategory?: string;
   image: string;
   creator: string;
   creatorAvatar: string;
@@ -32,151 +33,134 @@ export interface Creator {
 export const products: Product[] = [
   {
     id: "1",
-    name: "Ultimate Kitchen Organization Guide",
-    description: "Transform your kitchen with 50+ organization tips, printable labels, and storage solutions.",
-    price: 12.99,
-    category: "kitchen",
+    name: "Professional Kitchen Set",
+    description: "High-quality stainless steel kitchen tools for everyday cooking.",
+    price: 45.99,
+    category: "kitchen-tools",
+    subcategory: "cutlery-sets",
     image: kitchenOrgImage,
-    creator: "HomeStyle Pro",
+    creator: "Chef Essentials",
     creatorAvatar: "/placeholder.svg",
-    rating: 4.9,
-    downloads: 2340,
+    rating: 4.8,
+    downloads: 1200,
     featured: true,
     date: "2024-01-15T10:00:00Z"
   },
   {
     id: "2",
-    name: "Meal Prep Planner Bundle",
-    description: "Weekly meal planners, grocery lists, and 100+ recipe cards for efficient cooking.",
-    price: 19.99,
-    category: "kitchen",
+    name: "Insulated Water Bottle",
+    description: "Keep your drinks cold for 24 hours with our premium water bottle.",
+    price: 24.99,
+    category: "kitchen-tools",
+    subcategory: "water-bottles",
     image: mealPrepImage,
-    creator: "Chef Maria",
+    creator: "EcoGear",
     creatorAvatar: "/placeholder.svg",
-    rating: 4.8,
-    downloads: 1890,
+    rating: 4.9,
+    downloads: 850,
     date: "2024-01-20T14:30:00Z"
   },
   {
     id: "3",
-    name: "Deep Clean Checklist System",
-    description: "Room-by-room cleaning schedules, checklists, and natural cleaning recipes.",
-    price: 8.99,
-    category: "cleaning",
+    name: "Smart Food Blender",
+    description: "High-speed blender with multiple presets for smoothies and soups.",
+    price: 89.99,
+    category: "kitchen-tools",
+    subcategory: "blenders",
     image: cleaningImage,
-    creator: "Clean Living Co",
+    creator: "TechKitchen",
     creatorAvatar: "/placeholder.svg",
     rating: 4.7,
-    downloads: 3210,
+    downloads: 450,
     featured: true,
     date: "2023-12-10T09:15:00Z"
   },
   {
     id: "4",
-    name: "Eco-Friendly Cleaning Guide",
-    description: "DIY natural cleaning products, zero-waste tips, and sustainable home care.",
-    price: 14.99,
-    category: "cleaning",
-    image: cleaningImage,
-    creator: "Green Home",
+    name: "Minimalist Wall Clock",
+    description: "Elegant wooden wall clock for modern home decor.",
+    price: 34.99,
+    category: "home-decor",
+    image: bedroomImage,
+    creator: "DesignCo",
     creatorAvatar: "/placeholder.svg",
-    rating: 4.9,
-    downloads: 1567,
+    rating: 4.6,
+    downloads: 320,
     date: "2024-02-01T16:45:00Z"
   },
   {
     id: "5",
-    name: "Bedroom Sanctuary Blueprint",
-    description: "Sleep optimization guide, bedroom layout templates, and relaxation techniques.",
-    price: 16.99,
-    category: "bedroom",
-    image: bedroomImage,
-    creator: "Rest & Renew",
+    name: "Eco Cleaning Kit",
+    description: "Complete set of non-toxic cleaning supplies for your home.",
+    price: 29.99,
+    category: "cleaning-supplies",
+    image: cleaningImage,
+    creator: "GreenPure",
     creatorAvatar: "/placeholder.svg",
     rating: 4.8,
-    downloads: 987,
+    downloads: 670,
     date: "2024-01-05T11:20:00Z"
   },
   {
     id: "6",
-    name: "Closet Organization Masterclass",
-    description: "Wardrobe organization system, seasonal rotation guides, and capsule wardrobe templates.",
-    price: 22.99,
-    category: "bedroom",
-    image: bedroomImage,
-    creator: "Style Sorted",
-    creatorAvatar: "/placeholder.svg",
-    rating: 4.6,
-    downloads: 2100,
-    featured: true,
-    date: "2024-02-15T13:00:00Z"
-  },
-  {
-    id: "7",
-    name: "Smart Kitchen Gadget Guide",
-    description: "Reviews and how-to guides for modern kitchen tools and appliances.",
-    price: 9.99,
-    category: "kitchen",
+    name: "Premium Chef Knife",
+    description: "Forged Japanese steel knife for precise cutting.",
+    price: 59.99,
+    category: "kitchen-tools",
+    subcategory: "knives",
     image: kitchenOrgImage,
-    creator: "Tech Kitchen",
+    creator: "MasterCut",
     creatorAvatar: "/placeholder.svg",
-    rating: 4.5,
-    downloads: 1234,
-    date: "2023-11-20T15:30:00Z"
-  },
-  {
-    id: "8",
-    name: "Laundry Room Revolution",
-    description: "Stain removal guide, fabric care tips, and laundry room organization hacks.",
-    price: 11.99,
-    category: "cleaning",
-    image: cleaningImage,
-    creator: "Clean Living Co",
-    creatorAvatar: "/placeholder.svg",
-    rating: 4.7,
-    downloads: 1876,
-    date: "2024-01-25T09:00:00Z"
-  },
+    rating: 4.9,
+    downloads: 210,
+    date: "2024-02-15T13:00:00Z"
+  }
 ];
 
 export const creators: Creator[] = [
   {
     id: "1",
-    name: "HomeStyle Pro",
+    name: "Chef Essentials",
     avatar: "/placeholder.svg",
-    bio: "Professional home organizer with 10+ years experience",
-    products: 24,
-    sales: 12500,
+    bio: "Premium kitchenware for modern homes",
+    products: 15,
+    sales: 5400,
   },
   {
     id: "2",
-    name: "Chef Maria",
+    name: "DesignCo",
     avatar: "/placeholder.svg",
-    bio: "Culinary expert and meal prep specialist",
-    products: 18,
-    sales: 8900,
+    bio: "Minimalist home decor specialists",
+    products: 22,
+    sales: 3200,
   },
   {
     id: "3",
-    name: "Clean Living Co",
+    name: "GreenPure",
     avatar: "/placeholder.svg",
-    bio: "Sustainable cleaning solutions for modern homes",
-    products: 31,
-    sales: 15200,
-  },
-  {
-    id: "4",
-    name: "Rest & Renew",
-    avatar: "/placeholder.svg",
-    bio: "Sleep consultant and bedroom design expert",
-    products: 12,
-    sales: 5600,
-  },
+    bio: "Sustainable cleaning solutions",
+    products: 10,
+    sales: 1800,
+  }
 ];
 
 export const categories = [
   { id: "all", name: "All Products", icon: "Grid3X3" },
-  { id: "kitchen", name: "Kitchen Items", icon: "ChefHat" },
-  { id: "cleaning", name: "Cleaning Supplies", icon: "Sparkles" },
-  { id: "bedroom", name: "Bedroom Items", icon: "Bed" },
+  {
+    id: "kitchen-tools",
+    name: "Kitchen Tools",
+    icon: "ChefHat",
+    subcategories: [
+      { id: "water-bottles", name: "Water Bottles" },
+      { id: "spoons", name: "Spoons" },
+      { id: "forks", name: "Forks" },
+      { id: "knives", name: "Knives" },
+      { id: "cutlery-sets", name: "Cutlery Sets" },
+      { id: "lunch-boxes", name: "Lunch Boxes" },
+      { id: "blenders", name: "Blenders" },
+      { id: "hand-blenders", name: "Hand Blenders" }
+    ]
+  },
+  { id: "home-decor", name: "Home Décor", icon: "Home" },
+  { id: "cleaning-supplies", name: "Cleaning Supplies", icon: "Sparkles" },
 ] as const;
