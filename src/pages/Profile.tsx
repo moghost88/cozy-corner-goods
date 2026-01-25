@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +26,10 @@ interface Purchase {
 
 const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .select("display_name, avatar_url")
@@ -80,7 +82,7 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
@@ -89,16 +91,16 @@ const Profile = () => {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to update profile.",
+        title: t("common.error") || "Error",
+        description: t("profile.updateError") || "Failed to update profile.",
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Profile updated",
-        description: "Your changes have been saved.",
+        title: t("dashboard.profileUpdated"),
+        description: t("profile.saveSuccess") || "Your changes have been saved.",
       });
-      setProfile({ ...profile, display_name: displayName });
+      setProfile({ ...(profile as any), display_name: displayName });
     }
     setSaving(false);
   };
@@ -119,7 +121,7 @@ const Profile = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={t("dir")}>
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
@@ -127,16 +129,16 @@ const Profile = () => {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">
-              My <span className="text-gradient-hero">Account</span>
+              {t("profile.title")}
             </h1>
             <p className="text-muted-foreground">
-              Manage your profile and view your purchases
+              {t("profile.subtitle") || "Manage your profile and view your purchases"}
             </p>
           </div>
-          
+
           <Button variant="outline" onClick={handleSignOut} className="gap-2">
             <LogOut className="h-4 w-4" />
-            Sign Out
+            {t("nav.signOut")}
           </Button>
         </div>
 
@@ -148,7 +150,7 @@ const Profile = () => {
             </div>
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground">
-                {profile?.display_name || "User"}
+                {profile?.display_name || t("common.user") || "User"}
               </h2>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
@@ -159,25 +161,23 @@ const Profile = () => {
         <div className="mb-6 flex gap-2 border-b border-border">
           <button
             onClick={() => setActiveTab("purchases")}
-            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "purchases"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === "purchases"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
           >
             <Package className="h-4 w-4" />
-            My Purchases
+            {t("profile.purchases")}
           </button>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "settings"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === "settings"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
           >
             <Settings className="h-4 w-4" />
-            Settings
+            {t("profile.settings")}
           </button>
         </div>
 
@@ -200,18 +200,18 @@ const Profile = () => {
                           {purchase.product_name}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Purchased on{" "}
-                          {new Date(purchase.purchased_at).toLocaleDateString()}
+                          {t("profile.purchasedOn") || "Purchased on"}{" "}
+                          {new Date(purchase.purchased_at).toLocaleDateString(t("language") === "ar" ? "ar-EG" : "en-US")}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="font-display font-semibold text-foreground">
-                        ${purchase.price}
+                        {t("dir") === "rtl" ? "" : "$"}{purchase.price}{t("dir") === "rtl" ? " $" : ""}
                       </span>
                       <Button variant="outline" size="sm" className="gap-2">
                         <Download className="h-4 w-4" />
-                        Download
+                        {t("products.downloads")}
                       </Button>
                     </div>
                   </div>
@@ -221,13 +221,13 @@ const Profile = () => {
               <div className="p-12 text-center">
                 <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
-                  No purchases yet
+                  {t("profile.noPurchases")}
                 </h3>
                 <p className="mb-4 text-muted-foreground">
-                  Start exploring our digital products!
+                  {t("profile.noPurchasesDesc") || "Start exploring our products!"}
                 </p>
                 <Link to="/">
-                  <Button variant="gradient">Browse Products</Button>
+                  <Button variant="gradient">{t("footer.browseProducts")}</Button>
                 </Link>
               </div>
             )}
@@ -235,12 +235,12 @@ const Profile = () => {
         ) : (
           <div className="rounded-2xl border border-border bg-card p-6">
             <h3 className="mb-6 font-display text-lg font-semibold text-foreground">
-              Profile Settings
+              {t("profile.profileSettings") || "Profile Settings"}
             </h3>
-            
+
             <div className="max-w-md space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -249,18 +249,18 @@ const Profile = () => {
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Email cannot be changed
+                  {t("profile.emailNotice") || "Email cannot be changed"}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
+                <Label htmlFor="displayName">{t("auth.displayName")}</Label>
                 <Input
                   id="displayName"
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your display name"
+                  placeholder={t("auth.displayNamePlaceholder")}
                 />
               </div>
 
@@ -273,12 +273,12 @@ const Profile = () => {
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
+                    {t("dashboard.save") || "Saving..."}
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Save Changes
+                    {t("dashboard.save") || "Save Changes"}
                   </>
                 )}
               </Button>

@@ -11,23 +11,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 const CartSheet = () => {
     const { items, removeFromCart, updateQuantity, cartTotal, isCartOpen, setIsCartOpen } = useCart();
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     return (
         <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-            <SheetContent className="flex w-full flex-col sm:max-w-lg">
+            <SheetContent className="flex w-full flex-col sm:max-w-lg" side={t("dir") === "rtl" ? "left" : "right"}>
                 <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                         <ShoppingBag className="h-5 w-5" />
-                        Your Cart ({items.length})
+                        {t("cart.title")} ({items.length})
                     </SheetTitle>
                     <SheetDescription>
-                        Review your items and checkout when you're ready.
+                        {t("cart.reviewOrder")}
                     </SheetDescription>
                 </SheetHeader>
 
@@ -36,9 +37,9 @@ const CartSheet = () => {
                         {items.length === 0 ? (
                             <div className="flex h-40 flex-col items-center justify-center gap-2 text-muted-foreground">
                                 <ShoppingBag className="h-10 w-10 opacity-20" />
-                                <p>Your cart is empty</p>
+                                <p>{t("cart.empty")}</p>
                                 <Button variant="link" onClick={() => setIsCartOpen(false)}>
-                                    Start Shopping
+                                    {t("cart.startShopping")}
                                 </Button>
                             </div>
                         ) : (
@@ -47,15 +48,15 @@ const CartSheet = () => {
                                     <div className="h-24 w-24 overflow-hidden rounded-lg border border-border">
                                         <img
                                             src={item.image}
-                                            alt={item.name}
+                                            alt={t(`product.${item.id}.name`)}
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
                                     <div className="flex flex-1 flex-col justify-between">
                                         <div className="flex justify-between">
                                             <div>
-                                                <h4 className="font-medium line-clamp-1">{item.name}</h4>
-                                                <p className="text-sm text-secondary">{item.category}</p>
+                                                <h4 className="font-medium line-clamp-1">{t(`product.${item.id}.name`)}</h4>
+                                                <p className="text-sm text-secondary">{t(`category.${item.category}`)}</p>
                                             </div>
                                             <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
@@ -99,7 +100,7 @@ const CartSheet = () => {
                     <div className="space-y-4 pt-4">
                         <Separator />
                         <div className="flex items-center justify-between font-medium">
-                            <span>Total</span>
+                            <span>{t("cart.total")}</span>
                             <span className="text-xl font-bold text-primary">${cartTotal.toFixed(2)}</span>
                         </div>
                         <SheetFooter>
@@ -109,10 +110,10 @@ const CartSheet = () => {
                                 variant="hero"
                                 onClick={() => {
                                     setIsCartOpen(false);
-                                    navigate('/checkout'); // We'll need to create this page next
+                                    navigate('/checkout');
                                 }}
                             >
-                                Proceed to Checkout
+                                {t("cart.checkout")}
                             </Button>
                         </SheetFooter>
                     </div>

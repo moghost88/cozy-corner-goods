@@ -66,27 +66,33 @@ const FilterSidebar = ({ className = "" }: FilterSidebarProps) => {
                                 <span className={`text-sm ${category === cat.id ? "font-semibold" : "font-medium"}`}>
                                     {t("category." + cat.id)}
                                 </span>
+                                {/* Category items */}
                                 {'subcategories' in cat && (
                                     <button
                                         onClick={(e) => {
+                                            e.preventDefault();
                                             e.stopPropagation();
                                             toggleExpand(cat.id);
                                         }}
                                         className="p-0.5 hover:bg-muted rounded text-muted-foreground"
                                     >
-                                        {expandedCategories.includes(cat.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                        {expandedCategories.includes(cat.id) ? (
+                                            <ChevronDown className="h-4 w-4" />
+                                        ) : (
+                                            <ChevronRight className={`h-4 w-4 ${t("dir") === "rtl" ? "rotate-180" : ""}`} />
+                                        )}
                                     </button>
                                 )}
                             </div>
 
                             {'subcategories' in cat && expandedCategories.includes(cat.id) && (
-                                <div className="ml-4 rtl:mr-4 border-l rtl:border-l-0 rtl:border-r border-border pl-2 rtl:pl-0 rtl:pr-2 space-y-1 py-1">
+                                <div className={`mt-1 space-y-1 py-1 ${t("dir") === "rtl" ? "mr-4 border-r pr-2" : "ml-4 border-l pl-2"} border-border`}>
                                     <button
                                         onClick={() => {
                                             setCategory(cat.id);
                                             setSubcategory("all");
                                         }}
-                                        className={`block w-full text-left rtl:text-right px-2 py-1 text-xs rounded transition-colors ${category === cat.id && subcategory === "all" ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                        className={`block w-full ${t("dir") === "rtl" ? "text-right" : "text-left"} px-2 py-1 text-xs rounded transition-colors ${category === cat.id && subcategory === "all" ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                             }`}
                                     >
                                         {t("category.all")}
@@ -98,7 +104,7 @@ const FilterSidebar = ({ className = "" }: FilterSidebarProps) => {
                                                 setCategory(cat.id);
                                                 setSubcategory(sub.id);
                                             }}
-                                            className={`block w-full text-left rtl:text-right px-2 py-1 text-xs rounded transition-colors ${subcategory === sub.id ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                            className={`block w-full ${t("dir") === "rtl" ? "text-right" : "text-left"} px-2 py-1 text-xs rounded transition-colors ${subcategory === sub.id ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                                 }`}
                                         >
                                             {t("subcategory." + sub.id)}
@@ -135,7 +141,7 @@ const FilterSidebar = ({ className = "" }: FilterSidebarProps) => {
                                     />
                                 ))}
                             </div>
-                            <span className="text-xs">{t("rating.up") || "& Up"}</span>
+                            <span className="text-xs">{t("rating.up")}</span>
                         </button>
                     ))}
                 </div>

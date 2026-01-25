@@ -17,7 +17,7 @@ const CreatorSpotlight = () => {
   };
 
   return (
-    <section className="py-16">
+    <section className="py-16" dir={dir}>
       <div className="container mx-auto px-4">
         <div className="mb-10 flex items-center justify-between">
           <div>
@@ -35,16 +35,18 @@ const CreatorSpotlight = () => {
               size="icon"
               onClick={dir === "rtl" ? nextCreator : prevCreator}
               className="rounded-full"
+              aria-label={t("common.previous") || "Previous"}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className={`h-5 w-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={dir === "rtl" ? prevCreator : nextCreator}
               className="rounded-full"
+              aria-label={t("common.next") || "Next"}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className={`h-5 w-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
             </Button>
           </div>
         </div>
@@ -80,10 +82,10 @@ const CreatorSpotlight = () => {
 
                       <div className="flex-1">
                         <h3 className="font-display text-lg font-semibold text-foreground">
-                          {creator.name}
+                          {t(`creator.${creator.id}.name`)}
                         </h3>
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                          {creator.bio}
+                          {t(`creator.${creator.id}.bio`)}
                         </p>
                       </div>
                     </div>
@@ -121,11 +123,10 @@ const CreatorSpotlight = () => {
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
+              className={`h-2 rounded-full transition-all duration-300 ${index === currentIndex
                   ? "w-8 bg-primary"
                   : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
+                }`}
             />
           ))}
         </div>

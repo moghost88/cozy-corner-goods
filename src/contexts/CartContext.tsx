@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from './LanguageContext';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -36,21 +37,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(handler);
   }, [items]);
 
+  const { t } = useLanguage();
+
   const addToCart = (product: Product) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
         toast({
-          title: "Added to cart",
-          description: "Increased quantity of " + product.name,
+          title: t("cart.addedToCart"),
+          description: t("cart.increasedQuantity") + " " + t(`product.${product.id}.name`),
         });
         return prev.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       toast({
-        title: "Added to cart",
-        description: product.name + " added to your cart",
+        title: t("cart.addedToCart"),
+        description: t(`product.${product.id}.name`) + " " + t("cart.addedToCartDesc"),
       });
       return [...prev, { ...product, quantity: 1 }];
     });

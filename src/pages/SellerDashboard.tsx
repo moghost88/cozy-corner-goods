@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const SellerDashboard = () => {
+    const { t } = useLanguage();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
@@ -22,7 +24,7 @@ const SellerDashboard = () => {
     const [formData, setFormData] = useState({
         name: "",
         price: "",
-        category: "kitchen",
+        category: "kitchen-tools",
         description: "",
         image: ""
     });
@@ -33,8 +35,8 @@ const SellerDashboard = () => {
 
         if (!user) {
             toast({
-                title: "Error",
-                description: "You must be logged in to create a product",
+                title: t("common.error") || "Error",
+                description: t("dashboard.loginRequired") || "You must be logged in to create a product",
                 variant: "destructive",
             });
             setLoading(false);
@@ -54,21 +56,21 @@ const SellerDashboard = () => {
             if (error) throw error;
 
             toast({
-                title: "Success",
-                description: "Product created successfully!",
+                title: t("common.success") || "Success",
+                description: t("dashboard.productAdded"),
             });
 
             // Reset form
             setFormData({
                 name: "",
                 price: "",
-                category: "kitchen",
+                category: "kitchen-tools",
                 description: "",
                 image: ""
             });
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: t("common.error") || "Error",
                 description: error.message,
                 variant: "destructive",
             });
@@ -78,47 +80,47 @@ const SellerDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background" dir={t("dir")}>
             <Navbar />
 
             <div className="container py-8">
                 <div className="mb-8 flex items-center justify-between">
                     <div>
-                        <h1 className="font-display text-3xl font-bold">Seller Dashboard</h1>
-                        <p className="text-muted-foreground">Manage your products and view sales</p>
+                        <h1 className="font-display text-3xl font-bold">{t("dashboard.title")}</h1>
+                        <p className="text-muted-foreground">{t("dashboard.welcome")}</p>
                     </div>
                     <Button variant="default">
-                        <Plus className="mr-2 h-4 w-4" /> New Product
+                        <Plus className={`h-4 w-4 ${t("dir") === "rtl" ? "ml-2" : "mr-2"}`} /> {t("dashboard.newProduct")}
                     </Button>
                 </div>
 
                 <Tabs defaultValue="overview" className="space-y-6">
                     <TabsList>
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="products">Products</TabsTrigger>
-                        <TabsTrigger value="sales">Sales</TabsTrigger>
+                        <TabsTrigger value="overview">{t("dashboard.overview")}</TabsTrigger>
+                        <TabsTrigger value="products">{t("profile.myProducts")}</TabsTrigger>
+                        <TabsTrigger value="sales">{t("dashboard.sales")}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="overview" className="space-y-6">
                         <div className="grid gap-4 md:grid-cols-3">
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                                    <CardTitle className="text-sm font-medium">{t("dashboard.revenue")}</CardTitle>
                                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">$12,345.00</div>
-                                    <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                                    <p className="text-xs text-muted-foreground">+20.1% {t("dashboard.fromLastMonth") || "from last month"}</p>
                                 </CardContent>
                             </Card>
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+                                    <CardTitle className="text-sm font-medium">{t("dashboard.totalProducts")}</CardTitle>
                                     <Package className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">24</div>
-                                    <p className="text-xs text-muted-foreground">+2 new this month</p>
+                                    <p className="text-xs text-muted-foreground">+2 {t("dashboard.newThisMonth") || "new this month"}</p>
                                 </CardContent>
                             </Card>
                         </div>
@@ -127,27 +129,27 @@ const SellerDashboard = () => {
                     <TabsContent value="products">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Add New Product</CardTitle>
+                                <CardTitle>{t("dashboard.addProduct")}</CardTitle>
                                 <CardDescription>
-                                    Fill in the details to list a new digital product on the marketplace.
+                                    {t("dashboard.productDescription") || "Fill in the details to list a new digital product on the marketplace."}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleCreateProduct} className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="name">Product Name</Label>
+                                        <Label htmlFor="name">{t("dashboard.productName")}</Label>
                                         <Input
                                             id="name"
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            placeholder="e.g. Ultimate Meal Prep Guide"
+                                            placeholder={t("dashboard.productName")}
                                             required
                                         />
                                     </div>
 
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="price">Price ($)</Label>
+                                            <Label htmlFor="price">{t("dashboard.price")} ($)</Label>
                                             <Input
                                                 id="price"
                                                 type="number"
@@ -160,34 +162,34 @@ const SellerDashboard = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="category">Category</Label>
+                                            <Label htmlFor="category">{t("dashboard.category")}</Label>
                                             <select
                                                 id="category"
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                <option value="kitchen">Kitchen</option>
-                                                <option value="cleaning">Cleaning</option>
-                                                <option value="bedroom">Bedroom</option>
+                                                <option value="kitchen-tools">{t("category.kitchen-tools")}</option>
+                                                <option value="cleaning-supplies">{t("category.cleaning-supplies")}</option>
+                                                <option value="home-decor">{t("category.home-decor")}</option>
                                             </select>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Description</Label>
+                                        <Label htmlFor="description">{t("dashboard.productDescription")}</Label>
                                         <Textarea
                                             id="description"
                                             value={formData.description}
                                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            placeholder="Describe what's inside..."
+                                            placeholder={t("dashboard.productDescription")}
                                             className="min-h-[120px]"
                                             required
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="image">Image URL</Label>
+                                        <Label htmlFor="image">{t("dashboard.image")} URL</Label>
                                         <Input
                                             id="image"
                                             value={formData.image}
@@ -195,12 +197,12 @@ const SellerDashboard = () => {
                                             placeholder="https://example.com/image.jpg"
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            For demo purposes, please paste a public image URL.
+                                            {t("dashboard.demoNotice") || "For demo purposes, please paste a public image URL."}
                                         </p>
                                     </div>
 
                                     <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
-                                        {loading ? "Creating..." : "Create Product"}
+                                        {loading ? t("dashboard.add") + "..." : t("dashboard.addProduct")}
                                     </Button>
                                 </form>
                             </CardContent>

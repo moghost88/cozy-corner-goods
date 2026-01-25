@@ -44,7 +44,7 @@ const Index = () => {
   }, [searchQuery, category, subcategory, minRating, sortBy]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={t("dir")}>
       <Navbar />
 
       {/* Reduced Hero without search bar since it's in Navbar now */}
@@ -55,7 +55,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col gap-8 lg:flex-row">
               {/* Desktop Sidebar */}
-              <aside className="hidden w-64 shrink-0 lg:block">
+              <aside className={`hidden w-64 shrink-0 lg:block ${t("dir") === "rtl" ? "border-l" : "border-r"} border-border/50`}>
                 <div className="sticky top-24">
                   <FilterSidebar />
                 </div>
@@ -67,10 +67,10 @@ const Index = () => {
                   <SheetTrigger asChild>
                     <Button variant="outline" className="w-full gap-2">
                       <SlidersHorizontal className="h-4 w-4" />
-                      Filters
+                      {t("filters.title")}
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left">
+                  <SheetContent side={t("dir") === "rtl" ? "right" : "left"}>
                     <div className="mt-8">
                       <FilterSidebar />
                     </div>
@@ -105,9 +105,9 @@ const Index = () => {
                   </div>
                 ) : (
                   <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
-                    <p className="text-lg font-medium text-foreground">No products found</p>
+                    <p className="text-lg font-medium text-foreground">{t("products.noResults")}</p>
                     <p className="text-sm text-muted-foreground">
-                      Try adjusting your filters or search query.
+                      {t("products.subtitle")}
                     </p>
                   </div>
                 )}

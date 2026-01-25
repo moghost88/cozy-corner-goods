@@ -49,10 +49,10 @@ const Hero = () => {
           {/* Search Bar Removed - Moved to Navbar */}
           <div className="flex justify-center gap-4">
             <Button variant="gradient" size="lg" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
-              Shop Now
+              {t("hero.shopNow")}
             </Button>
             <Button variant="outline" size="lg">
-              Become a Seller
+              {t("hero.becomeSeller")}
             </Button>
           </div>
 

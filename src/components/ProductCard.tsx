@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Product } from "@/data/products";
 import { Link } from "react-router-dom";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,9 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { t } = useLanguage();
+
+  const creatorKey = product.creator.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div
@@ -22,7 +26,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
         <img
           src={product.image}
-          alt={product.name}
+          alt={t(`product.${product.id}.name`)}
           width="400"
           height="300"
           loading="lazy"
@@ -41,8 +45,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               addToWishlist(product);
             }
           }}
-          className="absolute right-3 top-3 z-10 rounded-full bg-background/80 p-2 backdrop-blur-sm transition-all hover:bg-background"
-          aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute ${t("dir") === "rtl" ? "left-3" : "right-3"} top-3 z-10 rounded-full bg-background/80 p-2 backdrop-blur-sm transition-all hover:bg-background`}
+          aria-label={isInWishlist(product.id) ? t("products.removeFromWishlist") : t("products.addToWishlist")}
         >
           <Heart
             className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
@@ -50,8 +54,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         </button>
 
         {product.featured && (
-          <Badge className="absolute left-3 top-3 bg-gradient-accent text-accent-foreground border-0">
-            Featured
+          <Badge className={`absolute ${t("dir") === "rtl" ? "right-3" : "left-3"} top-3 bg-gradient-accent text-accent-foreground border-0`}>
+            {t("products.featured")}
           </Badge>
         )}
 
@@ -59,8 +63,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         <div className="absolute inset-0 flex items-center justify-center bg-foreground/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <Link to={`/product/${product.id}`}>
             <Button variant="hero" size="lg" className="gap-2">
-              View Details
-              <ArrowRight className="h-4 w-4" />
+              {t("products.viewDetails")}
+              <ArrowRight className={`h-4 w-4 ${t("dir") === "rtl" ? "rotate-180" : ""}`} />
             </Button>
           </Link>
         </div>
@@ -70,21 +74,22 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       <div className="flex flex-1 flex-col p-5">
         {/* Category tag */}
         <span className="mb-2 text-xs font-medium uppercase tracking-wider text-secondary">
-          {product.category}
+          {t(`category.${product.category}`)}
+          {product.subcategory && ` • ${t(`subcategory.${product.subcategory}`)}`}
         </span>
 
         <h3 className="mb-2 font-display text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-          {product.name}
+          {t(`product.${product.id}.name`)}
         </h3>
 
         <p className="mb-4 flex-1 text-sm text-muted-foreground line-clamp-2">
-          {product.description}
+          {t(`product.${product.id}.description`)}
         </p>
 
         {/* Creator */}
         <div className="mb-4 flex items-center gap-2">
           <div className="h-6 w-6 rounded-full bg-gradient-hero" />
-          <span className="text-sm text-muted-foreground">{product.creator}</span>
+          <span className="text-sm text-muted-foreground">{t(`creator.${product.id}.name`)}</span>
         </div>
 
         {/* Stats & Price */}
@@ -101,7 +106,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           </div>
 
           <span className="font-display text-xl font-bold text-foreground">
-            ${product.price}
+            {t("dir") === "rtl" ? "" : "$"}{product.price}{t("dir") === "rtl" ? " $" : ""}
           </span>
         </div>
       </div>

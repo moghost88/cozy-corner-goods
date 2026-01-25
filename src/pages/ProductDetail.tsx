@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import ReviewList from "@/components/reviews/ReviewList";
 import RelatedProducts from "@/components/RelatedProducts";
@@ -13,21 +14,22 @@ import RelatedProducts from "@/components/RelatedProducts";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useLanguage();
   const product = products.find((p) => p.id === id);
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" dir={t("dir")}>
         <Navbar />
         <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4">
           <div className="text-center">
             <h1 className="mb-4 font-display text-2xl font-bold text-foreground">
-              Product not found
+              {t("products.noResults")}
             </h1>
             <Link to="/">
-              <Button variant="gradient">Back to Home</Button>
+              <Button variant="gradient">{t("auth.backToHome")}</Button>
             </Link>
           </div>
         </div>
@@ -37,14 +39,14 @@ const ProductDetail = () => {
   }
 
   const features = [
-    "Instant digital download",
-    "Printable PDF format",
-    "Lifetime access",
-    "Free updates included",
+    t("product.feature1") || "Instant digital download",
+    t("product.feature2") || "Printable PDF format",
+    t("product.feature3") || "Lifetime access",
+    t("product.feature4") || "Free updates included",
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={t("dir")}>
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
@@ -53,8 +55,8 @@ const ProductDetail = () => {
           to="/"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Products
+          <ArrowLeft className={`h-4 w-4 ${t("dir") === "rtl" ? "rotate-180" : ""}`} />
+          {t("products.title")}
         </Link>
 
         <div className="grid gap-10 lg:grid-cols-2">
@@ -64,19 +66,19 @@ const ProductDetail = () => {
               <div className="aspect-square overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
                 <img
                   src={product.image}
-                  alt={product.name}
+                  alt={t(`product.${product.id}.name`)}
                   className="h-full w-full object-cover"
                 />
               </div>
 
               {product.featured && (
-                <Badge className="absolute left-4 top-4 bg-gradient-accent border-0 text-accent-foreground">
-                  Featured
+                <Badge className={`absolute ${t("dir") === "rtl" ? "right-4" : "left-4"} top-4 bg-gradient-accent border-0 text-accent-foreground`}>
+                  {t("products.featured")}
                 </Badge>
               )}
 
               {/* Action buttons */}
-              <div className="absolute right-4 top-4 flex gap-2">
+              <div className={`absolute ${t("dir") === "rtl" ? "left-4" : "right-4"} top-4 flex gap-2`}>
                 <Button
                   variant="secondary"
                   size="icon"
@@ -88,6 +90,7 @@ const ProductDetail = () => {
                       addToWishlist(product);
                     }
                   }}
+                  aria-label={isInWishlist(product.id) ? t("products.removeFromWishlist") : t("products.addToWishlist")}
                 >
                   <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : ""}`} />
                 </Button>
@@ -102,11 +105,11 @@ const ProductDetail = () => {
           <div className="flex flex-col">
             {/* Category */}
             <span className="mb-2 text-sm font-medium uppercase tracking-wider text-secondary">
-              {product.category}
+              {t(`category.${product.category}`)}
             </span>
 
             <h1 className="mb-4 font-display text-3xl font-bold text-foreground lg:text-4xl">
-              {product.name}
+              {t(`product.${product.id}.name`)}
             </h1>
 
             {/* Creator & Stats */}
@@ -114,31 +117,31 @@ const ProductDetail = () => {
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-gradient-hero" />
                 <span className="text-sm font-medium text-foreground">
-                  {product.creator}
+                  {t(`creator.${product.id}.name`)}
                 </span>
               </div>
 
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-accent text-accent" />
                 <span className="font-medium text-foreground">{product.rating}</span>
-                <span className="text-muted-foreground">(120 reviews)</span>
+                <span className="text-muted-foreground">(120 {t("dashboard.reviews")})</span>
               </div>
 
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Download className="h-4 w-4" />
-                <span>{product.downloads.toLocaleString()} downloads</span>
+                <span>{product.downloads.toLocaleString()} {t("products.downloads")}</span>
               </div>
             </div>
 
             {/* Description */}
             <p className="mb-8 text-lg text-muted-foreground">
-              {product.description}
+              {t(`product.${product.id}.description`)}
             </p>
 
             {/* Features */}
             <div className="mb-8 rounded-2xl border border-border bg-muted/30 p-6">
               <h3 className="mb-4 font-display font-semibold text-foreground">
-                What's included:
+                {t("product.whatsIncluded") || "What's included:"}
               </h3>
               <ul className="space-y-3">
                 {features.map((feature) => (
@@ -156,13 +159,13 @@ const ProductDetail = () => {
             <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
               <div className="mb-4 flex items-end justify-between">
                 <div>
-                  <span className="text-sm text-muted-foreground">Price</span>
+                  <span className="text-sm text-muted-foreground">{t("dashboard.price")}</span>
                   <p className="font-display text-4xl font-bold text-foreground">
-                    ${product.price}
+                    {t("dir") === "rtl" ? "" : "$"}{product.price}{t("dir") === "rtl" ? " $" : ""}
                   </p>
                 </div>
                 <span className="rounded-full bg-secondary/20 px-3 py-1 text-sm font-medium text-secondary">
-                  One-time purchase
+                  {t("product.oneTimePurchase") || "One-time purchase"}
                 </span>
               </div>
 
@@ -173,11 +176,11 @@ const ProductDetail = () => {
                 onClick={() => addToCart(product)}
               >
                 <ShoppingCart className="h-5 w-5" />
-                Add to Cart
+                {t("products.addToCart")}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
-                Secure checkout powered by Stripe
+                {t("product.secureCheckout") || "Secure checkout powered by Stripe"}
               </p>
             </div>
           </div>

@@ -41,7 +41,7 @@ const Navbar = () => {
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={t("search here") || "Search products..."}
+              placeholder={t("search.placeholder")}
               className="w-full rounded-full border-border bg-muted/50 pl-10 focus:bg-background"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -51,11 +51,11 @@ const Navbar = () => {
 
         <div className="hidden items-center gap-2 md:flex">
           <Link to="/seller">
-            <Button variant="ghost" className="text-sm font-medium">Sell</Button>
+            <Button variant="ghost" className="text-sm font-medium">{t("nav.sell")}</Button>
           </Link>
           <LanguageToggle />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)} aria-label={`Cart with ${cartCount} items`}>
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)} aria-label={t("cart.title")}>
             <ShoppingCart className="h-5 w-5" />
             {cartCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -64,16 +64,16 @@ const Navbar = () => {
             )}
           </Button>
 
-          <Link to="/wishlist" aria-label="View Wishlist">
-            <Button variant="ghost" size="icon" aria-label="Wishlist">
+          <Link to="/wishlist" aria-label={t("nav.viewWishlist")}>
+            <Button variant="ghost" size="icon" aria-label={t("nav.wishlist")}>
               <Heart className="h-5 w-5" />
             </Button>
           </Link>
 
           {user ? (
             <>
-              <Link to="/profile" aria-label="View Profile">
-                <Button variant="ghost" size="icon" aria-label="Profile">
+              <Link to="/profile" aria-label={t("nav.viewProfile")}>
+                <Button variant="ghost" size="icon" aria-label={t("nav.profile")}>
                   <User className="h-5 w-5" />
                 </Button>
               </Link>
@@ -118,7 +118,7 @@ const Navbar = () => {
               {t("nav.contact")}
             </Link>
             <Link to="/seller" className="text-sm font-medium text-muted-foreground">
-              Sell on Cozy Corner
+              {t("nav.sellSubtitle")}
             </Link>
             <div className="flex gap-2 pt-2">
               {user ? (
