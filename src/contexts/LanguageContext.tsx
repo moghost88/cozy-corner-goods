@@ -18,7 +18,7 @@ const translations = {
     "nav.signIn": "تسجيل الدخول",
     "nav.signOut": "تسجيل الخروج",
     "nav.profile": "الملف الشخصي",
-    
+
     // Hero
     "hero.badge": "أكثر من 500+ منتج متوفر",
     "hero.title": "منزلك،",
@@ -30,21 +30,37 @@ const translations = {
     "hero.tag.mealPrep": "تحضير الوجبات",
     "hero.tag.organization": "التنظيم",
     "hero.tag.cleaningHacks": "حيل التنظيف",
-    "hero.tag.sleepBetter": "نوم أفضل",
-    
+
+    // Filters
+    "filters.title": "الفلاتر",
+    "filters.reset": "إعادة ضبط",
+    "rating.up": "فأكثر",
+
     // Products
     "products.title": "استكشف",
     "products.titleHighlight": "المنتجات",
     "products.subtitle": "اعثر على الأدوات المنزلية المثالية لمنزلك",
     "products.noResults": "لا توجد منتجات مطابقة لبحثك.",
     "products.featured": "مميز",
-    
+    "products.department": "القسم",
+    "products.customerReview": "تقييمات العملاء",
+
     // Categories
     "category.all": "جميع المنتجات",
-    "category.kitchen": "أدوات المطبخ",
-    "category.cleaning": "مستلزمات التنظيف",
-    "category.bedroom": "أدوات غرفة النوم",
-    
+    "category.kitchen-tools": "أدوات المطبخ",
+    "category.home-decor": "ديكور المنزل",
+    "category.cleaning-supplies": "مستلزمات التنظيف",
+
+    // Subcategories
+    "subcategory.water-bottles": "زجاجات المياه",
+    "subcategory.spoons": "ملاعق",
+    "subcategory.forks": "شوكات",
+    "subcategory.knives": "سكاكين",
+    "subcategory.cutlery-sets": "أطقم أدوات المائدة",
+    "subcategory.lunch-boxes": "صناديق الغداء",
+    "subcategory.blenders": "خلاطات",
+    "subcategory.hand-blenders": "خلاطات يدوية",
+
     // Creator Spotlight
     "creator.title": "أضواء على",
     "creator.titleHighlight": "المبدعين",
@@ -52,7 +68,7 @@ const translations = {
     "creator.products": "منتج",
     "creator.sales": "مبيعات",
     "creator.viewProfile": "عرض الملف",
-    
+
     // Footer
     "footer.description": "وجهتك للأدوات المنزلية المميزة والعصرية.",
     "footer.marketplace": "المتجر",
@@ -73,7 +89,7 @@ const translations = {
     "footer.emailPlaceholder": "أدخل بريدك الإلكتروني",
     "footer.copyright": "© 2024 معرض الطباخ. جميع الحقوق محفوظة.",
     "footer.cookies": "ملفات تعريف الارتباط",
-    
+
     // Auth
     "auth.backToHome": "العودة للرئيسية",
     "auth.welcomeBack": "مرحباً بعودتك",
@@ -99,11 +115,12 @@ const translations = {
     "auth.successLogin": "تم تسجيل الدخول بنجاح.",
     "auth.accountCreated": "تم إنشاء الحساب!",
     "auth.welcomeToStore": "مرحباً بك في معرض الطباخ!",
-    
+
     // Profile
     "profile.title": "ملفي الشخصي",
     "profile.purchases": "مشترياتي",
     "profile.noPurchases": "لا توجد مشتريات بعد.",
+    "dir": "rtl",
   },
   en: {
     // Navbar
@@ -113,7 +130,7 @@ const translations = {
     "nav.signIn": "Sign In",
     "nav.signOut": "Sign Out",
     "nav.profile": "Profile",
-    
+
     // Hero
     "hero.badge": "Over 500+ products available",
     "hero.title": "Your Home,",
@@ -125,21 +142,37 @@ const translations = {
     "hero.tag.mealPrep": "Meal Prep",
     "hero.tag.organization": "Organization",
     "hero.tag.cleaningHacks": "Cleaning Hacks",
-    "hero.tag.sleepBetter": "Sleep Better",
-    
+
+    // Filters
+    "filters.title": "Filters",
+    "filters.reset": "Reset",
+    "rating.up": "& Up",
+
     // Products
     "products.title": "Explore",
     "products.titleHighlight": "Products",
     "products.subtitle": "Find the perfect home resources for your needs",
     "products.noResults": "No products found matching your criteria.",
     "products.featured": "Featured",
-    
+    "products.department": "Department",
+    "products.customerReview": "Customer Review",
+
     // Categories
     "category.all": "All Products",
-    "category.kitchen": "Kitchen Items",
-    "category.cleaning": "Cleaning Supplies",
-    "category.bedroom": "Bedroom Items",
-    
+    "category.kitchen-tools": "Kitchen Tools",
+    "category.home-decor": "Home Décor",
+    "category.cleaning-supplies": "Cleaning Supplies",
+
+    // Subcategories
+    "subcategory.water-bottles": "Water Bottles",
+    "subcategory.spoons": "Spoons",
+    "subcategory.forks": "Forks",
+    "subcategory.knives": "Knives",
+    "subcategory.cutlery-sets": "Cutlery Sets",
+    "subcategory.lunch-boxes": "Lunch Boxes",
+    "subcategory.blenders": "Blenders",
+    "subcategory.hand-blenders": "Hand Blenders",
+
     // Creator Spotlight
     "creator.title": "Creator",
     "creator.titleHighlight": "Spotlight",
@@ -147,7 +180,7 @@ const translations = {
     "creator.products": "Products",
     "creator.sales": "Sales",
     "creator.viewProfile": "View Profile",
-    
+
     // Footer
     "footer.description": "Your destination for premium home organization resources.",
     "footer.marketplace": "Marketplace",
@@ -168,7 +201,7 @@ const translations = {
     "footer.emailPlaceholder": "Enter your email",
     "footer.copyright": "© 2024 Al-Tabbakh Store. All rights reserved.",
     "footer.cookies": "Cookies",
-    
+
     // Auth
     "auth.backToHome": "Back to Home",
     "auth.welcomeBack": "Welcome back",
@@ -194,11 +227,12 @@ const translations = {
     "auth.successLogin": "You have successfully logged in.",
     "auth.accountCreated": "Account created!",
     "auth.welcomeToStore": "Welcome to Al-Tabbakh Store!",
-    
+
     // Profile
     "profile.title": "My Profile",
     "profile.purchases": "My Purchases",
     "profile.noPurchases": "No purchases yet.",
+    "dir": "ltr",
   },
 };
 

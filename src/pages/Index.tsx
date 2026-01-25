@@ -84,16 +84,14 @@ const Index = () => {
                   <h2 className="font-display text-3xl font-bold text-foreground">
                     {category === "all"
                       ? t("products.title")
-                      : (categories.find(c => c.id === category)?.name || category)
+                      : t("category." + category)
                     }
                     {category !== "all" && subcategory !== "all" && (
                       <span className="text-muted-foreground whitespace-pre">
-                        {" > "}{
-                          (categories.find(c => c.id === category) as any)?.subcategories?.find((s: any) => s.id === subcategory)?.name
-                        }
+                        {t("dir") === "rtl" ? " < " : " > "}{t("subcategory." + subcategory)}
                       </span>
                     )}
-                    <span className="text-primary ml-2">
+                    <span className="text-primary ml-2 italic">
                       ({filteredProducts.length})
                     </span>
                   </h2>

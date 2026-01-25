@@ -13,7 +13,6 @@ const Hero = () => {
     { key: "hero.tag.mealPrep", search: "Meal Prep" },
     { key: "hero.tag.organization", search: "Organization" },
     { key: "hero.tag.cleaningHacks", search: "Cleaning" },
-    { key: "hero.tag.sleepBetter", search: "Sleep" },
   ];
 
   return (
