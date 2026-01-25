@@ -32,9 +32,9 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link to="/" className="mb-4 flex items-center gap-3">
-              <img src={logo} alt="معرض الطباخ" className="h-12 w-12 rounded-lg object-contain" />
+              <img src={logo} alt={t("nav.storeName")} className="h-12 w-12 rounded-lg object-contain" />
               <span className="font-display text-xl font-bold text-foreground">
-                معرض <span className="text-primary">الطباخ</span>
+                {t("nav.storeName")} <span className="text-primary">{t("nav.storeNameHighlight")}</span>
               </span>
             </Link>
             <p className="mb-4 text-sm text-muted-foreground">

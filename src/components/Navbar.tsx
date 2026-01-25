@@ -30,9 +30,9 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="معرض الطباخ" className="h-12 w-12 rounded-lg object-contain" />
+          <img src={logo} alt={t("nav.storeName")} className="h-12 w-12 rounded-lg object-contain" />
           <span className="font-display text-xl font-bold text-foreground">
-            معرض <span className="text-primary">الطباخ</span>
+            {t("nav.storeName")} <span className="text-primary">{t("nav.storeNameHighlight")}</span>
           </span>
         </Link>
 
