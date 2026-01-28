@@ -1,6 +1,13 @@
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useFilter } from "@/contexts/FilterContext";
 import { Button } from "@/components/ui/button";
 import { Star, ChevronRight, ChevronDown } from "lucide-react";
@@ -21,6 +28,8 @@ const FilterSidebar = ({ className = "" }: FilterSidebarProps) => {
         setSubcategory,
         minRating,
         setMinRating,
+        sortBy,
+        setSortBy,
         resetFilters,
     } = useFilter();
 
@@ -115,6 +124,24 @@ const FilterSidebar = ({ className = "" }: FilterSidebarProps) => {
                         </div>
                     ))}
                 </div>
+            </div>
+
+            <Separator />
+
+            {/* Sort By */}
+            <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">{t("filter.sortBy")}</h4>
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="featured">{t("filter.featured")}</SelectItem>
+                        <SelectItem value="price-asc">{t("filter.priceLowToHigh")}</SelectItem>
+                        <SelectItem value="price-desc">{t("filter.priceHighToLow")}</SelectItem>
+                        <SelectItem value="newest">{t("filter.newest")}</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             <Separator />

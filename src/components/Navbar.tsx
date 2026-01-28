@@ -50,6 +50,12 @@ const Navbar = () => {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          <Link to="/about">
+            <Button variant="ghost" className="text-sm font-medium">{t("nav.about")}</Button>
+          </Link>
+          <Link to="/contact">
+            <Button variant="ghost" className="text-sm font-medium">{t("nav.contact")}</Button>
+          </Link>
           <Link to="/seller">
             <Button variant="ghost" className="text-sm font-medium">{t("nav.sell")}</Button>
           </Link>

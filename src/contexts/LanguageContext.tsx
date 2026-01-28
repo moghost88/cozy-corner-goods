@@ -25,8 +25,10 @@ const translations = {
     "nav.wishlist": "قائمة الأمنيات",
     "search.placeholder": "ابحث عن المنتجات...",
     "search.here": "ابحث هنا...",
+    "nav.searchPlaceholder": "ابحث عن المنتجات...",
     "nav.viewWishlist": "عرض قائمة الأمنيات",
     "nav.viewProfile": "عرض الملف الشخصي",
+    "nav.about": "من نحن",
 
     // Hero
     "hero.badge": "أكثر من 500+ منتج متوفر",
@@ -46,6 +48,16 @@ const translations = {
     "filters.title": "الفلاتر",
     "filters.reset": "إعادة ضبط",
     "rating.up": "فأكثر",
+    "filter.filters": "الفلاتر",
+    "filter.sortBy": "ترتيب حسب",
+    "filter.category": "الفئة",
+    "filter.priceRange": "نطاق السعر",
+    "filter.rating": "التقييم",
+    "filter.allRatings": "جميع التقييمات",
+    "filter.featured": "مميز",
+    "filter.priceLowToHigh": "السعر: من الأقل للأعلى",
+    "filter.priceHighToLow": "السعر: من الأعلى للأقل",
+    "filter.newest": "الأحدث",
 
     // Products
     "products.title": "استكشف",
@@ -102,6 +114,9 @@ const translations = {
     "cart.checkout": "المتابعة لإتمام الشراء",
     "cart.itemAdded": "تمت إضافة المنتج للسلة",
     "cart.itemRemoved": "تمت إزالة المنتج من السلة",
+    "cart.addedToCart": "تمت الإضافة للسلة",
+    "cart.increasedQuantity": "تم زيادة الكمية لـ",
+    "cart.addedToCartDesc": "تمت إضافته إلى سلتك",
 
     // Checkout
     "checkout.title": "إتمام الشراء",
@@ -113,6 +128,28 @@ const translations = {
     "checkout.subtotal": "المجموع الفرعي",
     "checkout.shippingCost": "تكلفة الشحن",
     "checkout.free": "مجاني",
+    "checkout.fullName": "الاسم الكامل",
+    "checkout.fullNamePlaceholder": "أدخل اسمك الكامل",
+    "checkout.emailPlaceholder": "بريدك الإلكتروني",
+    "checkout.phone": "رقم الهاتف",
+    "checkout.phonePlaceholder": "رقم هاتفك",
+    "checkout.address": "العنوان",
+    "checkout.addressPlaceholder": "عنوانك الكامل",
+    "checkout.city": "المدينة",
+    "checkout.cityPlaceholder": "مدينتك",
+    "checkout.postalCode": "الرمز البريدي",
+    "checkout.postalCodePlaceholder": "الرمز البريدي",
+    "checkout.country": "الدولة",
+    "checkout.countryPlaceholder": "دولتك",
+    "checkout.cardNumber": "رقم البطاقة",
+    "checkout.cardNumberPlaceholder": "1234 5678 9012 3456",
+    "checkout.expiryDate": "تاريخ الانتهاء",
+    "checkout.expiryDatePlaceholder": "MM/YY",
+    "checkout.cvv": "CVV",
+    "checkout.cvvPlaceholder": "123",
+    "checkout.orderSuccess": "تم تأكيد طلبك!",
+    "checkout.orderSuccessDesc": "شكراً لك على طلبك. سنرسل لك تأكيداً عبر البريد الإلكتروني قريباً.",
+    "checkout.continueShopping": "متابعة التسوق",
 
     // Creator Spotlight
     "creator.title": "أضواء على",
@@ -182,8 +219,10 @@ const translations = {
 
     // Profile
     "profile.title": "ملفي الشخصي",
+    "profile.subtitle": "إدارة ملفك الشخصي ومشاهدة مشترياتك",
     "profile.purchases": "مشترياتي",
     "profile.noPurchases": "لا توجد مشتريات بعد.",
+    "profile.noPurchasesDesc": "ابدأ باستكشاف منتجاتنا!",
     "profile.edit": "تعديل الملف الشخصي",
     "profile.logout": "تسجيل الخروج",
     "profile.dashboard": "لوحة التحكم",
@@ -195,6 +234,11 @@ const translations = {
     "profile.confirmDelete": "هل أنت متأكد أنك تريد حذف حسابك؟",
     "profile.deleteSuccess": "تم حذف الحساب بنجاح.",
     "profile.deleteError": "حدث خطأ أثناء حذف الحساب.",
+    "profile.purchasedOn": "تم الشراء في",
+    "profile.profileSettings": "إعدادات الملف الشخصي",
+    "profile.emailNotice": "لا يمكن تغيير البريد الإلكتروني",
+    "profile.updateError": "فشل تحديث الملف الشخصي.",
+    "profile.saveSuccess": "تم حفظ التغييرات بنجاح.",
 
     // Dashboard
     "dashboard.title": "لوحة التحكم",
@@ -374,7 +418,68 @@ const translations = {
     "dashboard.sellerBusinessContactSellerBusinessContactSettings": "إعدادات شخص الاتصال لعمل بائع شخص الاتصال للعمل",
     "dashboard.sellerBusinessContactSellerBusinessContactLogout": "تسجيل الخروج لشخص الاتصال لعمل بائع شخص الاتصال للعمل",
     "dashboard.sellerBusinessContactSellerBusinessContactWelcome": "مرحباً بك في لوحة تحكم شخص الاتصال لعمل بائع شخص الاتصال للعمل!",
+    // Common
+    "common.error": "خطأ",
+    "common.success": "نجح",
+    "common.loading": "جاري التحميل...",
+    "common.user": "مستخدم",
+    "common.previous": "السابق",
+    "common.next": "التالي",
+
+    // Wishlist
+    "wishlist.title": "قائمة الأمنيات",
+    "wishlist.empty": "قائمة أمنياتك فارغة",
+    "wishlist.emptyDesc": "ابدأ بإضافة المنتجات التي تعجبك!",
+    "wishlist.addedToWishlist": "تمت الإضافة لقائمة الأمنيات",
+    "wishlist.removedFromWishlist": "تمت الإزالة من قائمة الأمنيات",
+
+    // NotFound
+    "notFound.title": "عذراً! الصفحة غير موجودة",
+
+    // Product Features
+    "product.feature1": "تحميل رقمي فوري",
+    "product.feature2": "صيغة PDF قابلة للطباعة",
+    "product.feature3": "وصول مدى الحياة",
+    "product.feature4": "تحديثات مجانية مضمنة",
+    "product.whatsIncluded": "ما المتضمن:",
+    "product.oneTimePurchase": "شراء لمرة واحدة",
+    "product.secureCheckout": "دفع آمن بواسطة Stripe",
+
     "dir": "rtl",
+    "language": "ar",
+
+    // About Page
+    "about.title": "من نحن",
+    "about.description": "نحن نؤمن بأن كل منزل يستحق أن يكون مريحاً وجميلاً. مهمتنا هي توفير منتجات منزلية عالية الجودة تجعل حياتك اليومية أسهل وأكثر متعة.",
+    "about.value1Title": "جودة عالية",
+    "about.value1Desc": "نختار بعناية كل منتج لضمان أعلى معايير الجودة",
+    "about.value2Title": "أسعار عادلة",
+    "about.value2Desc": "أسعار تنافسية بدون المساومة على الجودة",
+    "about.value3Title": "شحن سريع",
+    "about.value3Desc": "توصيل سريع وآمن إلى باب منزلك",
+    "about.value4Title": "رضا العملاء",
+    "about.value4Desc": "رضاك هو أولويتنا القصوى",
+    "about.storyTitle": "قصتنا",
+    "about.storyPara1": "بدأت Cozy Corner Goods في عام 2020 برؤية بسيطة: جعل المنتجات المنزلية عالية الجودة متاحة للجميع. ما بدأ كمتجر صغير عبر الإنترنت نما ليصبح سوقاً موثوقاً به يخدم آلاف العملاء السعداء.",
+    "about.storyPara2": "نحن نعمل مباشرة مع الحرفيين والمصنعين المحليين لنقدم لك منتجات فريدة وعملية تجعل منزلك أكثر راحة. كل منتج في مجموعتنا يتم اختياره بعناية لضمان أنه يلبي معايير الجودة الصارمة لدينا.",
+    "about.storyPara3": "اليوم، نحن فخورون بأن نكون أكثر من مجرد متجر - نحن مجتمع من محبي المنزل الذين يشاركون شغفاً بالجودة والراحة والأناقة.",
+
+    // Contact Page
+    "contact.title": "تواصل معنا",
+    "contact.subtitle": "لديك سؤال؟ نحن هنا للمساعدة!",
+    "contact.email": "البريد الإلكتروني",
+    "contact.phone": "الهاتف",
+    "contact.address": "العنوان",
+    "contact.name": "الاسم",
+    "contact.namePlaceholder": "اسمك الكامل",
+    "contact.emailPlaceholder": "بريدك الإلكتروني",
+    "contact.subject": "الموضوع",
+    "contact.subjectPlaceholder": "كيف يمكننا مساعدتك؟",
+    "contact.message": "الرسالة",
+    "contact.messagePlaceholder": "اكتب رسالتك هنا...",
+    "contact.send": "إرسال الرسالة",
+    "contact.successTitle": "تم إرسال الرسالة!",
+    "contact.successDesc": "شكراً لتواصلك معنا. سنرد عليك قريباً.",
   },
   en: {
     // Navbar
@@ -548,8 +653,101 @@ const translations = {
 
     // Profile
     "profile.title": "My Profile",
+    "profile.subtitle": "Manage your profile and view your purchases",
     "profile.purchases": "My Purchases",
     "profile.noPurchases": "No purchases yet.",
+    "profile.noPurchasesDesc": "Start exploring our products!",
+    "profile.edit": "Edit Profile",
+    "profile.logout": "Logout",
+    "profile.dashboard": "Dashboard",
+    "profile.myProducts": "My Products",
+    "profile.addProducts": "Add Products",
+    "profile.myOrders": "My Orders",
+    "profile.settings": "Settings",
+    "profile.deleteAccount": "Delete Account",
+    "profile.confirmDelete": "Are you sure you want to delete your account?",
+    "profile.deleteSuccess": "Account deleted successfully.",
+    "profile.deleteError": "Error deleting account.",
+    "profile.purchasedOn": "Purchased on",
+    "profile.profileSettings": "Profile Settings",
+    "profile.emailNotice": "Email cannot be changed",
+    "profile.updateError": "Failed to update profile.",
+    "profile.saveSuccess": "Changes saved successfully.",
+
+    // Common
+    "common.error": "Error",
+    "common.success": "Success",
+    "common.loading": "Loading...",
+    "common.user": "User",
+    "common.previous": "Previous",
+    "common.next": "Next",
+
+    // Wishlist
+    "wishlist.title": "Wishlist",
+    "wishlist.empty": "Your wishlist is empty",
+    "wishlist.emptyDesc": "Start adding products you love!",
+    "wishlist.addedToWishlist": "Added to wishlist",
+    "wishlist.removedFromWishlist": "Removed from wishlist",
+
+    // NotFound
+    "notFound.title": "Oops! Page not found",
+
+    // Product Features
+    "product.feature1": "Instant digital download",
+    "product.feature2": "Printable PDF format",
+    "product.feature3": "Lifetime access",
+    "product.feature4": "Free updates included",
+    "product.whatsIncluded": "What's included:",
+    "product.oneTimePurchase": "One-time purchase",
+    "product.secureCheckout": "Secure checkout powered by Stripe",
+
+    // Search & Filters
+    "nav.searchPlaceholder": "Search for products...",
+    "nav.about": "About",
+    "filter.filters": "Filters",
+    "filter.sortBy": "Sort By",
+    "filter.category": "Category",
+    "filter.priceRange": "Price Range",
+    "filter.rating": "Rating",
+    "filter.allRatings": "All Ratings",
+    "filter.featured": "Featured",
+    "filter.priceLowToHigh": "Price: Low to High",
+    "filter.priceHighToLow": "Price: High to Low",
+    "filter.newest": "Newest",
+
+    // About Page
+    "about.title": "About Us",
+    "about.description": "We believe every home deserves to be comfortable and beautiful. Our mission is to provide high-quality home products that make your daily life easier and more enjoyable.",
+    "about.value1Title": "High Quality",
+    "about.value1Desc": "We carefully select each product to ensure the highest quality standards",
+    "about.value2Title": "Fair Prices",
+    "about.value2Desc": "Competitive pricing without compromising on quality",
+    "about.value3Title": "Fast Shipping",
+    "about.value3Desc": "Quick and secure delivery to your doorstep",
+    "about.value4Title": "Customer Satisfaction",
+    "about.value4Desc": "Your satisfaction is our top priority",
+    "about.storyTitle": "Our Story",
+    "about.storyPara1": "Cozy Corner Goods started in 2020 with a simple vision: make high-quality home products accessible to everyone. What began as a small online store has grown into a trusted marketplace serving thousands of happy customers.",
+    "about.storyPara2": "We work directly with local artisans and manufacturers to bring you unique, practical products that make your home more comfortable. Every product in our collection is carefully selected to ensure it meets our strict quality standards.",
+    "about.storyPara3": "Today, we're proud to be more than just a store - we're a community of home enthusiasts who share a passion for quality, comfort, and elegance.",
+
+    // Contact Page
+    "contact.title": "Contact Us",
+    "contact.subtitle": "Have a question? We're here to help!",
+    "contact.email": "Email",
+    "contact.phone": "Phone",
+    "contact.address": "Address",
+    "contact.name": "Name",
+    "contact.namePlaceholder": "Your full name",
+    "contact.emailPlaceholder": "Your email",
+    "contact.subject": "Subject",
+    "contact.subjectPlaceholder": "How can we help you?",
+    "contact.message": "Message",
+    "contact.messagePlaceholder": "Write your message here...",
+    "contact.send": "Send Message",
+    "contact.successTitle": "Message sent!",
+    "contact.successDesc": "Thank you for contacting us. We'll get back to you soon.",
+
     "dir": "ltr",
   },
 };

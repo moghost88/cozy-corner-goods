@@ -19,6 +19,8 @@ import Profile from "./pages/Profile";
 import Checkout from "./pages/Checkout";
 import Wishlist from "./pages/Wishlist";
 import SellerDashboard from "./pages/SellerDashboard";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const PageLoader = () => (
@@ -40,17 +42,21 @@ const App = () => (
                 <TooltipProvider>
                   <Toaster />
                   <Sonner />
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/seller" element={<SellerDashboard />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <HashRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/seller" element={<SellerDashboard />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </HashRouter>
                 </TooltipProvider>
               </FilterProvider>
             </WishlistProvider>
