@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Twitter, Instagram, Youtube, MessageCircle } from "lucide-react";
+import { Mail, Instagram, Youtube, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -41,8 +41,21 @@ const Footer = () => {
               {t("footer.description")}
             </p>
             <div className="flex gap-3">
-              <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("footer.twitter")}>
-                <Twitter className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("footer.tiktok") || "TikTok"}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                </svg>
               </Button>
               <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("footer.instagram")}>
                 <Instagram className="h-4 w-4" />

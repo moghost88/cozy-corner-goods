@@ -245,22 +245,37 @@ const Auth = () => {
               className="w-full"
               disabled={isGoogleLoading}
               onClick={async () => {
-                setIsGoogleLoading(true);
-                const { error } = await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: {
-                    redirectTo: `${window.location.origin}/`,
-                  },
-                });
-                if (error) {
+                try {
+                  setIsGoogleLoading(true);
+                  console.log("Starting Google Auth...");
+                  console.log("Redirect URL:", window.location.origin + "/");
+
+                  const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                      redirectTo: `${window.location.origin}/`,
+                      queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                      },
+                    },
+                  });
+
+                  if (error) {
+                    console.error("Google Auth Error:", error);
+                    throw error;
+                  }
+
+                  console.log("Google Auth initiated:", data);
+                } catch (error: any) {
                   setIsGoogleLoading(false);
+                  console.error("Catch Error:", error);
                   toast({
                     title: t("common.error") || "Error",
-                    description: error.message,
+                    description: error.message || "Failed to sign in with Google",
                     variant: "destructive",
                   });
                 }
-                // Note: No need to set loading to false on success as we redirect
               }}
             >
               {isGoogleLoading ? (
