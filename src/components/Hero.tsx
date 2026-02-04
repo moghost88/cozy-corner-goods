@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -51,9 +52,11 @@ const Hero = () => {
             <Button variant="gradient" size="lg" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
               {t("hero.shopNow")}
             </Button>
-            <Button variant="outline" size="lg">
-              {t("hero.becomeSeller")}
-            </Button>
+            <Link to="/seller">
+              <Button variant="outline" size="lg">
+                {t("hero.becomeSeller")}
+              </Button>
+            </Link>
           </div>
 
           {/* Popular tags */}
