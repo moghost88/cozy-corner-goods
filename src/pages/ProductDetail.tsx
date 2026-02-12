@@ -1,13 +1,16 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import { ArrowLeft, Star, Download, ShoppingCart, Heart, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { addToRecentlyViewed } from "@/components/RecentlyViewed";
 import ReviewList from "@/components/reviews/ReviewList";
 import RelatedProducts from "@/components/RelatedProducts";
 
@@ -18,6 +21,13 @@ const ProductDetail = () => {
   const product = products.find((p) => p.id === id);
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+
+  // Track recently viewed
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed(product);
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -50,14 +60,13 @@ const ProductDetail = () => {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <Link
-          to="/"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className={`h-4 w-4 ${t("dir") === "rtl" ? "rotate-180" : ""}`} />
-          {t("products.title")}
-        </Link>
+        {/* Breadcrumbs */}
+        <Breadcrumbs
+          items={[
+            { label: t("category." + product.category), to: "/" },
+            { label: t(`product.${product.id}.name`) },
+          ]}
+        />
 
         <div className="grid gap-10 lg:grid-cols-2">
           {/* Product Preview */}

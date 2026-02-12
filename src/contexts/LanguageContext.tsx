@@ -480,6 +480,65 @@ const translations = {
     "contact.send": "إرسال الرسالة",
     "contact.successTitle": "تم إرسال الرسالة!",
     "contact.successDesc": "شكراً لتواصلك معنا. سنرد عليك قريباً.",
+
+    // Order Confirmation
+    "orderConfirm.title": "تم تأكيد طلبك!",
+    "orderConfirm.subtitle": "شكراً لتسوقك معنا. سيتم معالجة طلبك قريباً.",
+    "orderConfirm.orderId": "رقم الطلب",
+    "orderConfirm.processingTitle": "قيد المعالجة",
+    "orderConfirm.processingDesc": "سيتم شحن طلبك خلال 1-3 أيام عمل",
+    "orderConfirm.trackTitle": "تتبع الطلب",
+    "orderConfirm.trackDesc": "يمكنك تتبع طلبك من صفحة الطلبات",
+    "orderConfirm.viewOrders": "عرض الطلبات",
+    "orderConfirm.continueShopping": "متابعة التسوق",
+
+    // Order History
+    "orderHistory.title": "طلباتي",
+    "orderHistory.subtitle": "عرض وتتبع جميع طلباتك",
+    "orderHistory.empty": "لا توجد طلبات",
+    "orderHistory.emptyDesc": "لم تقم بأي طلبات بعد. تصفح المنتجات لبدء التسوق!",
+    "orderHistory.startShopping": "ابدأ التسوق",
+    "orderHistory.orderId": "رقم الطلب",
+    "orderHistory.date": "التاريخ",
+    "orderHistory.statusProcessing": "قيد المعالجة",
+    "orderHistory.statusShipped": "تم الشحن",
+    "orderHistory.statusDelivered": "تم التوصيل",
+
+    // Seller Dashboard Enhanced
+    "seller.dashboardTitle": "لوحة تحكم البائع",
+    "seller.dashboardDesc": "إدارة منتجاتك ومبيعاتك",
+    "seller.myProducts": "منتجاتي",
+    "seller.addProduct": "إضافة منتج",
+    "seller.totalProducts": "إجمالي المنتجات",
+    "seller.totalSales": "إجمالي المبيعات",
+    "seller.totalRevenue": "إجمالي الإيرادات",
+    "seller.noProducts": "لا توجد منتجات",
+    "seller.noProductsDesc": "لم تقم بإضافة أي منتجات بعد. ابدأ الآن!",
+    "seller.productName": "اسم المنتج",
+    "seller.productNamePlaceholder": "أدخل اسم المنتج",
+    "seller.description": "الوصف",
+    "seller.descriptionPlaceholder": "وصف المنتج بالتفصيل...",
+    "seller.category": "الفئة",
+    "seller.selectCategory": "اختر فئة",
+    "seller.imageUrl": "رابط الصورة",
+    "seller.createProduct": "إنشاء المنتج",
+    "seller.productCreated": "تم إنشاء المنتج بنجاح!",
+    "seller.productUpdated": "تم تحديث المنتج بنجاح!",
+    "seller.productDeleted": "تم حذف المنتج بنجاح!",
+    "seller.loginRequired": "يجب تسجيل الدخول لإضافة منتج",
+    "seller.edit": "تعديل",
+    "seller.delete": "حذف",
+    "seller.saveChanges": "حفظ التغييرات",
+    "seller.cancelEdit": "إلغاء",
+
+    // Breadcrumbs
+    "breadcrumb.home": "الرئيسية",
+
+    // Recently Viewed
+    "recentlyViewed.title": "شوهد مؤخراً",
+
+    // Nav Orders
+    "nav.orders": "طلباتي",
   },
   en: {
     // Navbar
@@ -747,6 +806,65 @@ const translations = {
     "contact.send": "Send Message",
     "contact.successTitle": "Message sent!",
     "contact.successDesc": "Thank you for contacting us. We'll get back to you soon.",
+
+    // Order Confirmation
+    "orderConfirm.title": "Order Confirmed!",
+    "orderConfirm.subtitle": "Thank you for shopping with us. Your order is being processed.",
+    "orderConfirm.orderId": "Order ID",
+    "orderConfirm.processingTitle": "Processing",
+    "orderConfirm.processingDesc": "Your order will be shipped within 1-3 business days",
+    "orderConfirm.trackTitle": "Track Order",
+    "orderConfirm.trackDesc": "You can track your order from the Orders page",
+    "orderConfirm.viewOrders": "View Orders",
+    "orderConfirm.continueShopping": "Continue Shopping",
+
+    // Order History
+    "orderHistory.title": "My Orders",
+    "orderHistory.subtitle": "View and track all your orders",
+    "orderHistory.empty": "No Orders Yet",
+    "orderHistory.emptyDesc": "You haven't placed any orders yet. Browse products to start shopping!",
+    "orderHistory.startShopping": "Start Shopping",
+    "orderHistory.orderId": "Order ID",
+    "orderHistory.date": "Date",
+    "orderHistory.statusProcessing": "Processing",
+    "orderHistory.statusShipped": "Shipped",
+    "orderHistory.statusDelivered": "Delivered",
+
+    // Seller Dashboard Enhanced
+    "seller.dashboardTitle": "Seller Dashboard",
+    "seller.dashboardDesc": "Manage your products and sales",
+    "seller.myProducts": "My Products",
+    "seller.addProduct": "Add Product",
+    "seller.totalProducts": "Total Products",
+    "seller.totalSales": "Total Sales",
+    "seller.totalRevenue": "Total Revenue",
+    "seller.noProducts": "No Products",
+    "seller.noProductsDesc": "You haven't added any products yet. Get started!",
+    "seller.productName": "Product Name",
+    "seller.productNamePlaceholder": "Enter product name",
+    "seller.description": "Description",
+    "seller.descriptionPlaceholder": "Describe your product in detail...",
+    "seller.category": "Category",
+    "seller.selectCategory": "Select a category",
+    "seller.imageUrl": "Image URL",
+    "seller.createProduct": "Create Product",
+    "seller.productCreated": "Product created successfully!",
+    "seller.productUpdated": "Product updated successfully!",
+    "seller.productDeleted": "Product deleted successfully!",
+    "seller.loginRequired": "You must be logged in to add a product",
+    "seller.edit": "Edit",
+    "seller.delete": "Delete",
+    "seller.saveChanges": "Save Changes",
+    "seller.cancelEdit": "Cancel",
+
+    // Breadcrumbs
+    "breadcrumb.home": "Home",
+
+    // Recently Viewed
+    "recentlyViewed.title": "Recently Viewed",
+
+    // Nav Orders
+    "nav.orders": "My Orders",
 
     "dir": "ltr",
   },

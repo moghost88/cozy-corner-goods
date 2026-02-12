@@ -74,7 +74,7 @@ const Checkout = () => {
             title: t("checkout.successTitle") || "Order placed successfully!",
             description: t("checkout.successDesc") || "Check your email for confirmation.",
         });
-        navigate("/");
+        navigate("/order-confirmation");
     };
 
     if (items.length === 0) {

@@ -1,4 +1,4 @@
-import { ShoppingCart, User, Menu, LogOut, Heart, Search } from "lucide-react";
+import { ShoppingCart, User, Menu, LogOut, Heart, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -78,6 +78,11 @@ const Navbar = () => {
 
           {user ? (
             <>
+              <Link to="/orders" aria-label={t("nav.orders")}>
+                <Button variant="ghost" size="icon" aria-label={t("nav.orders")}>
+                  <Package className="h-5 w-5" />
+                </Button>
+              </Link>
               <Link to="/profile" aria-label={t("nav.viewProfile")}>
                 <Button variant="ghost" size="icon" aria-label={t("nav.profile")}>
                   <User className="h-5 w-5" />
@@ -129,6 +134,12 @@ const Navbar = () => {
             <div className="flex gap-2 pt-2">
               {user ? (
                 <>
+                  <Link to="/orders" className="flex-1">
+                    <Button variant="outline" className="w-full gap-2">
+                      <Package className="h-4 w-4" />
+                      {t("nav.orders")}
+                    </Button>
+                  </Link>
                   <Link to="/profile" className="flex-1">
                     <Button variant="outline" className="w-full gap-2">
                       <User className="h-4 w-4" />
