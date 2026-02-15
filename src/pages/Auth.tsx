@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpeg";
 
 const authSchema = z.object({
@@ -136,39 +137,62 @@ const Auth = () => {
           </Link>
 
           {/* Card */}
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-card">
-            {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="rounded-3xl border border-border bg-card p-8 shadow-card"
+          >
             <div className="mb-6 flex items-center justify-center">
               <img src={logo} alt="معرض الطباخ" className="h-16 w-16 rounded-xl object-contain" />
             </div>
 
-            <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
-              {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
-            </h1>
-            <p className="mb-8 text-center text-muted-foreground">
-              {isLogin ? t("auth.signInSubtitle") : t("auth.signUpSubtitle")}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isLogin ? "login" : "signup"}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
+                  {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
+                </h1>
+                <p className="mb-8 text-center text-muted-foreground">
+                  {isLogin ? t("auth.signInSubtitle") : t("auth.signUpSubtitle")}
+                </p>
+              </motion.div>
+            </AnimatePresence>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">{t("auth.displayName")}</Label>
-                  <div className="relative">
-                    <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="displayName"
-                      type="text"
-                      placeholder={t("auth.displayNamePlaceholder")}
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="ps-10"
-                    />
-                  </div>
-                  {errors.displayName && (
-                    <p className="text-sm text-destructive">{errors.displayName}</p>
-                  )}
-                </div>
-              )}
+              <AnimatePresence>
+                {!isLogin && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 pb-4">
+                      <Label htmlFor="displayName">{t("auth.displayName")}</Label>
+                      <div className="relative">
+                        <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="displayName"
+                          type="text"
+                          placeholder={t("auth.displayNamePlaceholder")}
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          className="ps-10"
+                        />
+                      </div>
+                      {errors.displayName && (
+                        <p className="text-sm text-destructive">{errors.displayName}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="space-y-2">
                 <Label htmlFor="email">{t("auth.email")}</Label>
@@ -300,7 +324,7 @@ const Auth = () => {
                 {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

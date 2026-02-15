@@ -1,4 +1,5 @@
 import { Star, Download, ArrowRight, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/data/products";
@@ -18,9 +19,12 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const creatorKey = product.creator.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
+      viewport={{ once: true, margin: "-50px" }}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-500 hover:-translate-y-2 hover:shadow-card-hover"
-      style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
@@ -110,7 +114,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           </span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,12 @@ const Hero = () => {
       <div className="container relative mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2"
+          >
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-accent"></span>
@@ -36,19 +42,34 @@ const Hero = () => {
             <span className="text-sm font-medium text-foreground">
               {t("hero.badge")}
             </span>
-          </div>
+          </motion.div>
 
           {/* Headline */}
-          <h1 className="mb-6 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-6 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl"
+          >
             {t("hero.title")} <span className="text-primary">{t("hero.titleHighlight")}</span>
-          </h1>
+          </motion.h1>
 
-          <p className="mb-8 text-lg text-muted-foreground sm:text-xl">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-8 text-lg text-muted-foreground sm:text-xl"
+          >
             {t("hero.description")}
-          </p>
+          </motion.p>
 
           {/* Search Bar Removed - Moved to Navbar */}
-          <div className="flex justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex justify-center gap-4"
+          >
             <Button variant="gradient" size="lg" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
               {t("hero.shopNow")}
             </Button>
@@ -57,10 +78,15 @@ const Hero = () => {
                 {t("hero.becomeSeller")}
               </Button>
             </Link>
-          </div>
+          </motion.div>
 
           {/* Popular tags */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-6 flex flex-wrap items-center justify-center gap-2"
+          >
             <span className="text-sm text-muted-foreground">{t("hero.popular")}</span>
             {popularTags.map((tag) => (
               <button
@@ -71,7 +97,7 @@ const Hero = () => {
                 {t(tag.key)}
               </button>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

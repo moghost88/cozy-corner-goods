@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -220,8 +221,14 @@ const SellerDashboard = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {myProducts.map((product) => (
-                                        <div key={product.id} className="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
+                                    {myProducts.map((product, index) => (
+                                        <motion.div
+                                            key={product.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md"
+                                        >
                                             {editingProduct?.id === product.id ? (
                                                 /* Edit Form */
                                                 <div className="space-y-4">
@@ -286,7 +293,7 @@ const SellerDashboard = () => {
                                                     </div>
                                                 </div>
                                             )}
-                                        </div>
+                                        </motion.div>
                                     ))}
                                 </div>
                             )}

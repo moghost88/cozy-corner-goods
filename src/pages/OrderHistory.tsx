@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -87,11 +88,14 @@ const OrderHistory = () => {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {orders.map((order) => {
+                            {orders.map((order, index) => {
                                 const status = statusConfig[order.status || "processing"];
                                 return (
-                                    <div
+                                    <motion.div
                                         key={order.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
                                         className="rounded-xl border border-border bg-card p-6 transition-shadow hover:shadow-md"
                                     >
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -129,7 +133,7 @@ const OrderHistory = () => {
                                                 />
                                             </div>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 );
                             })}
                         </div>
