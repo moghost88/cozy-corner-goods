@@ -1,4 +1,4 @@
-import { Star, Download, ArrowRight, Heart } from "lucide-react";
+import { Star, Download, ArrowRight, Heart, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Product } from "@/data/products";
 import { Link } from "react-router-dom";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCart } from "@/contexts/CartContext";
 
 interface ProductCardProps {
   product: Product;
@@ -14,32 +15,47 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const { t } = useLanguage();
-
-  const creatorKey = product.creator.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.06,
+        ease: [0.25, 0.4, 0.25, 1],
+      }}
       viewport={{ once: true, margin: "-50px" }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-500 hover:-translate-y-2 hover:shadow-card-hover"
+      whileHover={{ y: -8 }}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow duration-500 hover:shadow-card-hover"
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
-        <img
+        <motion.img
           src={product.image}
           alt={t(`product.${product.id}.name`)}
           width="400"
           height="300"
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="h-full w-full object-cover"
+          whileHover={{ scale: 1.12 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+        />
+
+        {/* Gradient overlay on hover */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
         />
 
         {/* Wishlist Button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -50,27 +66,61 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             }
           }}
           className={`absolute ${t("dir") === "rtl" ? "left-3" : "right-3"} top-3 z-10 rounded-full bg-background/80 p-2 backdrop-blur-sm transition-all hover:bg-background`}
-          aria-label={isInWishlist(product.id) ? t("products.removeFromWishlist") : t("products.addToWishlist")}
+          aria-label={
+            isInWishlist(product.id)
+              ? t("products.removeFromWishlist")
+              : t("products.addToWishlist")
+          }
         >
           <Heart
-            className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
+            className={`h-5 w-5 transition-colors duration-300 ${isInWishlist(product.id)
+                ? "fill-destructive text-destructive"
+                : "text-muted-foreground"
+              }`}
           />
-        </button>
+        </motion.button>
 
         {product.featured && (
-          <Badge className={`absolute ${t("dir") === "rtl" ? "right-3" : "left-3"} top-3 bg-gradient-accent text-accent-foreground border-0`}>
-            {t("products.featured")}
-          </Badge>
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: index * 0.06 + 0.3 }}
+          >
+            <Badge
+              className={`absolute ${t("dir") === "rtl" ? "right-3" : "left-3"} top-3 bg-gradient-accent text-accent-foreground border-0`}
+            >
+              {t("products.featured")}
+            </Badge>
+          </motion.div>
         )}
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-foreground/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        {/* Hover Action Buttons */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 p-4 opacity-0 transition-all duration-300 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0">
           <Link to={`/product/${product.id}`}>
-            <Button variant="hero" size="lg" className="gap-2">
-              {t("products.viewDetails")}
-              <ArrowRight className={`h-4 w-4 ${t("dir") === "rtl" ? "rotate-180" : ""}`} />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="hero" size="sm" className="gap-1.5 shadow-lg">
+                {t("products.viewDetails")}
+                <ArrowRight
+                  className={`h-3.5 w-3.5 ${t("dir") === "rtl" ? "rotate-180" : ""}`}
+                />
+              </Button>
+            </motion.div>
           </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow-lg"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
+              }}
+              aria-label={t("products.addToCart")}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
+          </motion.div>
         </div>
       </div>
 
@@ -82,7 +132,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           {product.subcategory && ` • ${t(`subcategory.${product.subcategory}`)}`}
         </span>
 
-        <h3 className="mb-2 font-display text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="mb-2 font-display text-lg font-semibold text-foreground line-clamp-2 transition-colors duration-300 group-hover:text-primary">
           {t(`product.${product.id}.name`)}
         </h3>
 
@@ -93,7 +143,9 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         {/* Creator */}
         <div className="mb-4 flex items-center gap-2">
           <div className="h-6 w-6 rounded-full bg-gradient-hero" />
-          <span className="text-sm text-muted-foreground">{t(`creator.${product.id}.name`)}</span>
+          <span className="text-sm text-muted-foreground">
+            {t(`creator.${product.id}.name`)}
+          </span>
         </div>
 
         {/* Stats & Price */}
@@ -101,17 +153,26 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-accent text-accent" />
-              <span className="text-sm font-medium text-foreground">{product.rating}</span>
+              <span className="text-sm font-medium text-foreground">
+                {product.rating}
+              </span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
               <Download className="h-4 w-4" />
-              <span className="text-sm">{product.downloads.toLocaleString()}</span>
+              <span className="text-sm">
+                {product.downloads.toLocaleString()}
+              </span>
             </div>
           </div>
 
-          <span className="font-display text-xl font-bold text-foreground">
-            {t("dir") === "rtl" ? "" : "$"}{product.price}{t("dir") === "rtl" ? " $" : ""}
-          </span>
+          <motion.span
+            className="font-display text-xl font-bold text-foreground"
+            whileHover={{ scale: 1.1 }}
+          >
+            {t("dir") === "rtl" ? "" : "$"}
+            {product.price}
+            {t("dir") === "rtl" ? " $" : ""}
+          </motion.span>
         </div>
       </div>
     </motion.div>

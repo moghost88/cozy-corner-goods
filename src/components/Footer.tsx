@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Mail, Instagram, Youtube, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,13 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+          className="grid gap-8 md:grid-cols-2 lg:grid-cols-4"
+        >
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link to="/" className="mb-4 flex items-center gap-3">
@@ -133,7 +140,7 @@ const Footer = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Bottom */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">

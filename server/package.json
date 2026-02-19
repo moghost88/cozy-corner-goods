@@ -1,0 +1,17 @@
+{
+    "name": "cozy-corner-goods-api",
+    "version": "1.0.0",
+    "description": "Backend API for Cozy Corner Goods marketplace",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "node --watch index.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "@supabase/supabase-js": "^2.90.1"
+    }
+}
