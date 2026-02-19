@@ -19,16 +19,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Handle OAuth redirect tokens in the URL hash
+    // When using HashRouter, Supabase returns tokens like:
+    // https://site.com/path/#access_token=...&refresh_token=...
+    // HashRouter sees this as the route. We need to extract tokens and set session.
+    const handleOAuthRedirect = async () => {
+      const hash = window.location.hash;
+
+      // Check if the URL hash contains OAuth tokens (not a route path)
+      if (hash && hash.includes("access_token=")) {
+        // Extract the fragment part after the hash
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (error) {
+              console.error("Error setting session from OAuth redirect:", error);
+            } else {
+              setSession(data.session);
+              setUser(data.session?.user ?? null);
+            }
+          } catch (err) {
+            console.error("Failed to handle OAuth redirect:", err);
+          }
+
+          // Clean up the URL — remove tokens from the hash
+          // Preserve the HashRouter route (or default to home)
+          window.history.replaceState(null, "", window.location.pathname + "#/");
+        }
+      }
+    };
+
+    handleOAuthRedirect();
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -39,8 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
+    const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,

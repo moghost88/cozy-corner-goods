@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,12 +27,34 @@ const Auth = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; displayName?: string }>({});
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { t, dir } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
+
+  // If user is already signed in (e.g. after Google redirect), go home
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
+
+  // Listen for auth state changes (handles Google OAuth redirect)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        toast({
+          title: t("auth.welcomeBackToast"),
+          description: t("auth.successLogin"),
+        });
+        navigate("/", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, toast, t]);
 
   const validateForm = () => {
     try {
@@ -115,6 +137,21 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Build the correct redirect URL for Google OAuth
+  // For GitHub Pages (HashRouter), the redirect must go to the base URL
+  // The auth state listener above will handle navigation after sign-in
+  const getGoogleRedirectUrl = () => {
+    const origin = window.location.origin;
+    const pathname = window.location.pathname;
+
+    // For GitHub Pages: https://moghost88.github.io/cozy-corner-goods/
+    // For local dev: http://localhost:8080/
+    if (pathname && pathname !== "/" && !pathname.endsWith("/")) {
+      return `${origin}${pathname}/`;
+    }
+    return `${origin}${pathname}`;
   };
 
   return (
@@ -271,13 +308,13 @@ const Auth = () => {
               onClick={async () => {
                 try {
                   setIsGoogleLoading(true);
-                  console.log("Starting Google Auth...");
-                  console.log("Redirect URL:", window.location.origin + "/");
 
-                  const { data, error } = await supabase.auth.signInWithOAuth({
+                  const redirectUrl = getGoogleRedirectUrl();
+
+                  const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                      redirectTo: `${window.location.origin}/`,
+                      redirectTo: redirectUrl,
                       queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -286,14 +323,12 @@ const Auth = () => {
                   });
 
                   if (error) {
-                    console.error("Google Auth Error:", error);
                     throw error;
                   }
 
-                  console.log("Google Auth initiated:", data);
+                  // Browser will redirect to Google — no further action needed
                 } catch (error: any) {
                   setIsGoogleLoading(false);
-                  console.error("Catch Error:", error);
                   toast({
                     title: t("common.error") || "Error",
                     description: error.message || "Failed to sign in with Google",
@@ -332,3 +367,4 @@ const Auth = () => {
 };
 
 export default Auth;
+

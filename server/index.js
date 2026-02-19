@@ -274,6 +274,224 @@ app.post("/api/reviews", async (req, res) => {
     }
 });
 
+// ===== PAYMOB PAYMENT =====
+
+// Step 1: Initiate payment — authenticates, registers order, generates payment key
+app.post("/api/paymob/pay", async (req, res) => {
+    try {
+        const { amount, currency, items, billingData, userId } = req.body;
+
+        if (!amount || !billingData) {
+            return res.status(400).json({ error: "Missing required payment fields" });
+        }
+
+        const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
+        const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
+        const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
+
+        if (!PAYMOB_API_KEY || !PAYMOB_INTEGRATION_ID || !PAYMOB_IFRAME_ID) {
+            return res.status(500).json({ error: "Paymob is not configured on the server" });
+        }
+
+        // 1. Authentication Request
+        const authResponse = await fetch("https://accept.paymob.com/api/auth/tokens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ api_key: PAYMOB_API_KEY }),
+        });
+        const authData = await authResponse.json();
+
+        if (!authData.token) {
+            console.error("Paymob auth failed:", authData);
+            return res.status(500).json({ error: "Payment authentication failed" });
+        }
+
+        const authToken = authData.token;
+
+        // 2. Order Registration
+        const amountCents = Math.round(amount * 100);
+        const orderItems = (items || []).map((item) => ({
+            name: item.name || "Product",
+            amount_cents: Math.round((item.price || 0) * 100),
+            quantity: item.quantity || 1,
+            description: item.description || "",
+        }));
+
+        const orderResponse = await fetch("https://accept.paymob.com/api/ecommerce/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                auth_token: authToken,
+                delivery_needed: "false",
+                amount_cents: amountCents,
+                currency: currency || "EGP",
+                items: orderItems,
+                merchant_order_id: `order_${userId}_${Date.now()}`,
+            }),
+        });
+        const orderData = await orderResponse.json();
+
+        if (!orderData.id) {
+            console.error("Paymob order registration failed:", orderData);
+            return res.status(500).json({ error: "Order registration failed" });
+        }
+
+        // 3. Payment Key Request
+        const paymentKeyResponse = await fetch("https://accept.paymob.com/api/acceptance/payment_keys", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                auth_token: authToken,
+                amount_cents: amountCents,
+                expiration: 3600,
+                order_id: orderData.id,
+                billing_data: {
+                    first_name: billingData.firstName || "N/A",
+                    last_name: billingData.lastName || "N/A",
+                    email: billingData.email || "customer@email.com",
+                    phone_number: billingData.phone || "+201000000000",
+                    apartment: billingData.apartment || "N/A",
+                    floor: billingData.floor || "N/A",
+                    street: billingData.street || "N/A",
+                    building: billingData.building || "N/A",
+                    shipping_method: "N/A",
+                    postal_code: billingData.postalCode || "00000",
+                    city: billingData.city || "Cairo",
+                    country: billingData.country || "EG",
+                    state: billingData.state || "Cairo",
+                },
+                currency: currency || "EGP",
+                integration_id: parseInt(PAYMOB_INTEGRATION_ID),
+            }),
+        });
+        const paymentKeyData = await paymentKeyResponse.json();
+
+        if (!paymentKeyData.token) {
+            console.error("Paymob payment key failed:", paymentKeyData);
+            return res.status(500).json({ error: "Payment key generation failed" });
+        }
+
+        res.json({
+            paymentToken: paymentKeyData.token,
+            iframeId: PAYMOB_IFRAME_ID,
+            orderId: orderData.id,
+            iframeUrl: `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentKeyData.token}`,
+        });
+    } catch (error) {
+        console.error("Paymob payment error:", error);
+        res.status(500).json({ error: "Payment processing failed" });
+    }
+});
+
+// Step 2: Paymob transaction callback (webhook)
+app.post("/api/paymob/callback", async (req, res) => {
+    try {
+        const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET;
+        const { obj, hmac } = req.body;
+
+        // Verify HMAC if secret is configured
+        if (PAYMOB_HMAC_SECRET && hmac) {
+            const { createHmac } = await import("crypto");
+            const concatenatedString = [
+                obj.amount_cents,
+                obj.created_at,
+                obj.currency,
+                obj.error_occured,
+                obj.has_parent_transaction,
+                obj.id,
+                obj.integration_id,
+                obj.is_3d_secure,
+                obj.is_auth,
+                obj.is_capture,
+                obj.is_refunded,
+                obj.is_standalone_payment,
+                obj.is_voided,
+                obj.order?.id || obj.order,
+                obj.owner,
+                obj.pending,
+                obj.source_data?.pan || "",
+                obj.source_data?.sub_type || "",
+                obj.source_data?.type || "",
+                obj.success,
+            ].join("");
+
+            const calculatedHmac = createHmac("sha512", PAYMOB_HMAC_SECRET)
+                .update(concatenatedString)
+                .digest("hex");
+
+            if (calculatedHmac !== hmac) {
+                console.error("HMAC verification failed");
+                return res.status(403).json({ error: "Invalid HMAC" });
+            }
+        }
+
+        // Process the payment result
+        if (obj.success === true) {
+            console.log(`✅ Payment successful: Order ${obj.order?.id}, Amount: ${obj.amount_cents / 100} ${obj.currency}`);
+
+            // Store the successful transaction in Supabase
+            try {
+                await supabase.from("payments").insert({
+                    paymob_order_id: String(obj.order?.id || obj.order),
+                    paymob_transaction_id: String(obj.id),
+                    amount: obj.amount_cents / 100,
+                    currency: obj.currency,
+                    status: "success",
+                    payment_method: obj.source_data?.type || "card",
+                    created_at: new Date().toISOString(),
+                });
+            } catch (dbError) {
+                console.error("Error storing payment:", dbError);
+            }
+        } else {
+            console.log(`❌ Payment failed: Order ${obj.order?.id}`);
+        }
+
+        res.json({ status: "received" });
+    } catch (error) {
+        console.error("Paymob callback error:", error);
+        res.status(500).json({ error: "Callback processing failed" });
+    }
+});
+
+// Step 3: Verify transaction status (called by frontend after redirect)
+app.get("/api/paymob/verify/:transactionId", async (req, res) => {
+    try {
+        const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
+
+        // Get auth token
+        const authResponse = await fetch("https://accept.paymob.com/api/auth/tokens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ api_key: PAYMOB_API_KEY }),
+        });
+        const authData = await authResponse.json();
+
+        // Get transaction details
+        const txResponse = await fetch(
+            `https://accept.paymob.com/api/acceptance/transactions/${req.params.transactionId}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${authData.token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        const txData = await txResponse.json();
+
+        res.json({
+            success: txData.success,
+            orderId: txData.order?.id,
+            amount: txData.amount_cents / 100,
+            currency: txData.currency,
+            status: txData.success ? "paid" : "failed",
+        });
+    } catch (error) {
+        console.error("Paymob verification error:", error);
+        res.status(500).json({ error: "Verification failed" });
+    }
+});
+
 // ===== NEWSLETTER =====
 app.post("/api/newsletter", async (req, res) => {
     try {
