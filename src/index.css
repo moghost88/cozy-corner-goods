@@ -270,3 +270,69 @@ html {
     box-shadow: 0 12px 40px -12px hsl(var(--primary) / 0.15);
   }
 }
+
+/* =====================================================
+   CSS-ONLY ANIMATIONS (no JS — runs on compositor)
+   ===================================================== */
+
+/* Loading screen blobs */
+@keyframes blob-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -30px) scale(1.15); }
+  66%       { transform: translate(-20px, 20px) scale(0.92); }
+}
+@keyframes blob-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-40px, 20px) scale(0.85); }
+  66%       { transform: translate(20px, -30px) scale(1.1); }
+}
+@keyframes blob-drift-3 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(20px, -20px); }
+}
+
+.loading-blob-1 { animation: blob-drift-1 9s ease-in-out infinite; }
+.loading-blob-2 { animation: blob-drift-2 11s ease-in-out infinite; }
+.loading-blob-3 { animation: blob-drift-3 7s ease-in-out infinite; }
+
+/* Hero section blobs */
+.hero-blob-1 { animation: blob-drift-1 13s ease-in-out infinite; }
+.hero-blob-2 { animation: blob-drift-2 15s ease-in-out infinite; }
+.hero-blob-3 { animation: blob-drift-3 11s ease-in-out infinite; }
+
+/* Loading ring rotation */
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.loading-ring { animation: ring-spin 3s linear infinite; }
+
+/* Loading dots bounce */
+@keyframes dot-bounce {
+  0%, 100% { transform: scale(1);   opacity: 0.3; }
+  50%       { transform: scale(1.5); opacity: 1;   }
+}
+.loading-dot {
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+
+/* Hero animated gradient text (replaces JS backgroundPosition animation) */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.hero-gradient-text {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)),
+    hsl(var(--accent)),
+    hsl(var(--primary))
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gradient-shift 5s linear infinite;
+}

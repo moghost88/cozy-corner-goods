@@ -20,15 +20,16 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.5,
-        delay: index * 0.06,
+        duration: 0.4,
+        delay: Math.min(index * 0.06, 0.3),
         ease: [0.25, 0.4, 0.25, 1],
       }}
-      viewport={{ once: true, margin: "-50px" }}
-      whileHover={{ y: -8 }}
+      viewport={{ once: true, margin: "-40px" }}
+      whileHover={{ y: -6 }}
+      style={{ willChange: "transform, opacity" }}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow duration-500 hover:shadow-card-hover"
     >
       {/* Image Container */}
@@ -74,8 +75,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         >
           <Heart
             className={`h-5 w-5 transition-colors duration-300 ${isInWishlist(product.id)
-                ? "fill-destructive text-destructive"
-                : "text-muted-foreground"
+              ? "fill-destructive text-destructive"
+              : "text-muted-foreground"
               }`}
           />
         </motion.button>
@@ -167,7 +168,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
           <motion.span
             className="font-display text-xl font-bold text-foreground"
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
+            style={{ willChange: "transform", display: "inline-block" }}
           >
             {t("dir") === "rtl" ? "" : "$"}
             {product.price}
