@@ -13,7 +13,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'implicit',
+    // IMPORTANT: We set detectSessionInUrl to FALSE because we handle
+    // OAuth/recovery hash tokens manually in main.tsx (before React mounts).
+    // This prevents Supabase from interfering with HashRouter's hash.
+    detectSessionInUrl: false,
   }
 });

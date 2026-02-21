@@ -6,9 +6,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isRecovery: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  clearRecovery: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,65 +20,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
-    // Handle OAuth redirect tokens in the URL hash
-    // When using HashRouter, Supabase returns tokens like:
-    // https://site.com/path/#access_token=...&refresh_token=...
-    // HashRouter sees this as the route. We need to extract tokens and set session.
-    const handleOAuthRedirect = async () => {
-      const hash = window.location.hash;
+    let isMounted = true;
 
-      // Check if the URL hash contains OAuth tokens (not a route path)
-      if (hash && hash.includes("access_token=")) {
-        // Extract the fragment part after the hash
-        const hashParams = new URLSearchParams(hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
+    /**
+     * Consume auth tokens that were extracted from the URL hash
+     * by main.tsx BEFORE React mounted (prevents HashRouter race condition).
+     */
+    const consumeStoredTokens = async () => {
+      const stored = sessionStorage.getItem("__supabase_auth_tokens");
+      if (!stored) return false;
 
-        if (accessToken && refreshToken) {
-          try {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+      // Remove immediately so we don't re-process on re-render
+      sessionStorage.removeItem("__supabase_auth_tokens");
 
-            if (error) {
-              console.error("Error setting session from OAuth redirect:", error);
-            } else {
-              setSession(data.session);
-              setUser(data.session?.user ?? null);
-            }
-          } catch (err) {
-            console.error("Failed to handle OAuth redirect:", err);
+      try {
+        const { access_token, refresh_token, type } = JSON.parse(stored);
+
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (error) {
+            console.error("Error restoring session from redirect:", error.message);
+            return false;
           }
 
-          // Clean up the URL — remove tokens from the hash
-          // Preserve the HashRouter route (or default to home)
-          window.history.replaceState(null, "", window.location.pathname + "#/");
+          if (isMounted && data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+
+            // If this is a password recovery flow, flag it
+            if (type === "recovery") {
+              setIsRecovery(true);
+            }
+          }
+          return true;
         }
+      } catch (err) {
+        console.error("Failed to parse stored auth tokens:", err);
+      }
+      return false;
+    };
+
+    const initialize = async () => {
+      // First, try to consume tokens from OAuth/recovery redirect
+      const wasRedirect = await consumeStoredTokens();
+
+      if (!wasRedirect) {
+        // No redirect — check for existing session
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (isMounted) {
+          setSession(existingSession);
+          setUser(existingSession?.user ?? null);
+        }
+      }
+
+      if (isMounted) {
+        setLoading(false);
       }
     };
 
-    handleOAuthRedirect();
+    initialize();
 
-    // Set up auth state listener
+    // Listen for future auth state changes (sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+      (event, newSession) => {
+        if (isMounted) {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+
+          if (event === "PASSWORD_RECOVERY") {
+            setIsRecovery(true);
+          }
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
@@ -103,11 +132,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    setIsRecovery(false);
     await supabase.auth.signOut();
   };
 
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (!error) {
+      setIsRecovery(false);
+    }
+    return { error };
+  };
+
+  const clearRecovery = () => {
+    setIsRecovery(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        isRecovery,
+        signUp,
+        signIn,
+        signOut,
+        updatePassword,
+        clearRecovery,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

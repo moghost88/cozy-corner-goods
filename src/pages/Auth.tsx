@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Mail, Lock, User, Loader2, KeyRound, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, Mail, Lock, User,
+  Loader2, KeyRound, CheckCircle2, ShieldCheck,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +21,7 @@ const authSchema = z.object({
   displayName: z.string().trim().max(100).optional(),
 });
 
-type AuthMode = "login" | "signup" | "forgot";
+type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 const slideVariants = {
   initial: { opacity: 0, x: 20 },
@@ -30,63 +33,75 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; displayName?: string }>({});
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isRecovery, updatePassword, clearRecovery } = useAuth();
   const { t, dir } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
 
-  // Redirect if already signed in
+  // Detect recovery flow from URL or AuthContext
   useEffect(() => {
-    if (user) {
+    const isRecoveryFromUrl = searchParams.get("recovery") === "true";
+    if (isRecovery || isRecoveryFromUrl) {
+      setMode("reset");
+    }
+  }, [isRecovery, searchParams]);
+
+  // Redirect if user is signed in (and not in recovery mode)
+  useEffect(() => {
+    if (user && mode !== "reset" && !isRecovery) {
       navigate("/", { replace: true });
     }
-  }, [user, navigate]);
-
-  // Handle auth events (Google redirect)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        toast({
-          title: t("auth.welcomeBackToast"),
-          description: t("auth.successLogin"),
-        });
-        navigate("/", { replace: true });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [navigate, toast, t]);
+  }, [user, navigate, mode, isRecovery]);
 
   const validateForm = () => {
-    try {
-      if (mode === "login") {
-        authSchema.pick({ email: true, password: true }).parse({ email, password });
-      } else if (mode === "signup") {
-        authSchema.parse({ email, password, displayName: displayName || undefined });
-      } else {
+    const fieldErrors: Record<string, string> = {};
+
+    if (mode === "forgot") {
+      try {
         authSchema.pick({ email: true }).parse({ email });
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          e.errors.forEach((err) => {
+            if (err.path[0]) fieldErrors[String(err.path[0])] = err.message;
+          });
+        }
       }
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: typeof errors = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof typeof fieldErrors] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
+    } else if (mode === "reset") {
+      if (password.length < 6) {
+        fieldErrors.password = "Password must be at least 6 characters";
       }
-      return false;
+      if (password !== confirmPassword) {
+        fieldErrors.confirmPassword = "Passwords do not match";
+      }
+    } else {
+      try {
+        if (mode === "login") {
+          authSchema.pick({ email: true, password: true }).parse({ email, password });
+        } else {
+          authSchema.parse({ email, password, displayName: displayName || undefined });
+        }
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          e.errors.forEach((err) => {
+            if (err.path[0]) fieldErrors[String(err.path[0])] = err.message;
+          });
+        }
+      }
     }
+
+    setErrors(fieldErrors);
+    return Object.keys(fieldErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,34 +114,42 @@ const Auth = () => {
         const { error } = await signIn(email, password);
         if (error) {
           toast({
-            title: t("auth.loginFailed"),
+            title: t("auth.loginFailed") || "Login Failed",
             description: error.message.includes("Invalid login credentials")
-              ? t("auth.invalidCredentials")
+              ? (t("auth.invalidCredentials") || "Invalid email or password")
               : error.message,
             variant: "destructive",
           });
         } else {
-          toast({ title: t("auth.welcomeBackToast"), description: t("auth.successLogin") });
+          toast({
+            title: t("auth.welcomeBackToast") || "Welcome back!",
+            description: t("auth.successLogin") || "You have signed in successfully.",
+          });
           navigate("/");
         }
       } else if (mode === "signup") {
         const { error } = await signUp(email, password, displayName);
         if (error) {
           toast({
-            title: error.message.includes("already registered") ? t("auth.accountExists") : t("auth.signUpFailed"),
+            title: error.message.includes("already registered")
+              ? (t("auth.accountExists") || "Account exists")
+              : (t("auth.signUpFailed") || "Sign up failed"),
             description: error.message,
             variant: "destructive",
           });
         } else {
-          toast({ title: t("auth.accountCreated"), description: t("auth.welcomeToStore") });
+          toast({
+            title: t("auth.accountCreated") || "Account Created",
+            description: t("auth.welcomeToStore") || "Welcome to the store!",
+          });
           navigate("/");
         }
-      } else {
-        // Forgot password
-        const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth`;
-
+      } else if (mode === "forgot") {
+        // Send password reset email
+        // IMPORTANT: redirect URL must NOT contain # — Supabase appends its own hash
+        const baseUrl = `${window.location.origin}${window.location.pathname}`;
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectUrl,
+          redirectTo: baseUrl,
         });
 
         if (error) {
@@ -138,6 +161,19 @@ const Auth = () => {
         } else {
           setResetSent(true);
         }
+      } else if (mode === "reset") {
+        // Update password
+        const { error } = await updatePassword(password);
+        if (error) {
+          toast({
+            title: t("common.error") || "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          setPasswordUpdated(true);
+          clearRecovery();
+        }
       }
     } finally {
       setLoading(false);
@@ -147,6 +183,7 @@ const Auth = () => {
   const getGoogleRedirectUrl = () => {
     const origin = window.location.origin;
     const pathname = window.location.pathname;
+    // Return base URL without hash — Supabase will append its own hash tokens
     if (pathname && pathname !== "/" && !pathname.endsWith("/")) {
       return `${origin}${pathname}/`;
     }
@@ -157,7 +194,398 @@ const Auth = () => {
     setMode(newMode);
     setErrors({});
     setResetSent(false);
+    setPasswordUpdated(false);
   };
+
+  // ——————————————————————————————
+  // RENDER: Password updated success
+  // ——————————————————————————————
+  const renderPasswordUpdated = () => (
+    <motion.div
+      key="password-updated"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center gap-4 py-4 text-center"
+    >
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+        <ShieldCheck className="h-8 w-8 text-green-500" />
+      </div>
+      <div>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          {t("auth.passwordUpdated") || "Password Updated!"}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("auth.passwordUpdatedDesc") || "Your password has been updated. You can now sign in with your new password."}
+        </p>
+      </div>
+      <Button
+        variant="hero"
+        className="mt-2 w-full"
+        onClick={() => {
+          switchMode("login");
+          navigate("/", { replace: true });
+        }}
+      >
+        {t("auth.goToHome") || "Go to Home"}
+      </Button>
+    </motion.div>
+  );
+
+  // ——————————————————————————————
+  // RENDER: Reset email sent success
+  // ——————————————————————————————
+  const renderResetSent = () => (
+    <motion.div
+      key="reset-success"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center gap-4 py-4 text-center"
+    >
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+        <CheckCircle2 className="h-8 w-8 text-green-500" />
+      </div>
+      <div>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          {t("auth.resetEmailSent") || "Check your email"}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("auth.resetEmailSentDesc") || `We've sent a password reset link to ${email}`}
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        className="mt-2 w-full"
+        onClick={() => switchMode("login")}
+      >
+        {t("auth.backToLogin") || "Back to Sign In"}
+      </Button>
+    </motion.div>
+  );
+
+  // ——————————————————————————————
+  // RENDER: Set New Password form (recovery mode)
+  // ——————————————————————————————
+  const renderResetForm = () => (
+    <motion.div
+      key="reset-form"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="mb-4 flex justify-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+          <ShieldCheck className="h-7 w-7 text-primary" />
+        </div>
+      </div>
+      <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
+        {t("auth.setNewPassword") || "Set New Password"}
+      </h1>
+      <p className="mb-6 text-center text-sm text-muted-foreground">
+        {t("auth.setNewPasswordDesc") || "Enter your new password below."}
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-password">{t("auth.newPassword") || "New Password"}</Label>
+          <div className="relative">
+            <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="new-password"
+              type="password"
+              placeholder={t("auth.newPasswordPlaceholder") || "Enter new password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="ps-10"
+              required
+              minLength={6}
+            />
+          </div>
+          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password">{t("auth.confirmPassword") || "Confirm Password"}</Label>
+          <div className="relative">
+            <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="confirm-password"
+              type="password"
+              placeholder={t("auth.confirmPasswordPlaceholder") || "Confirm new password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="ps-10"
+              required
+              minLength={6}
+            />
+          </div>
+          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+        </div>
+
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t("auth.updatingPassword") || "Updating..."}
+            </>
+          ) : (
+            t("auth.updatePassword") || "Update Password"
+          )}
+        </Button>
+      </form>
+    </motion.div>
+  );
+
+  // ——————————————————————————————
+  // RENDER: Forgot Password form
+  // ——————————————————————————————
+  const renderForgotForm = () => (
+    <motion.div
+      key="forgot-form"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="mb-4 flex justify-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+          <KeyRound className="h-7 w-7 text-primary" />
+        </div>
+      </div>
+      <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
+        {t("auth.forgotPassword") || "Forgot Password?"}
+      </h1>
+      <p className="mb-6 text-center text-sm text-muted-foreground">
+        {t("auth.forgotPasswordDesc") || "Enter your email and we'll send you a reset link."}
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="reset-email">{t("auth.email")}</Label>
+          <div className="relative">
+            <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="reset-email"
+              type="email"
+              placeholder={t("auth.emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="ps-10"
+              required
+            />
+          </div>
+          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+        </div>
+
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t("auth.sendingReset") || "Sending..."}
+            </>
+          ) : (
+            t("auth.sendResetLink") || "Send Reset Link"
+          )}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full text-muted-foreground"
+          onClick={() => switchMode("login")}
+        >
+          <BackArrow className="me-2 h-4 w-4" />
+          {t("auth.backToLogin") || "Back to Sign In"}
+        </Button>
+      </form>
+    </motion.div>
+  );
+
+  // ——————————————————————————————
+  // RENDER: Login / Signup form
+  // ——————————————————————————————
+  const renderAuthForm = () => (
+    <motion.div
+      key={mode + "-form"}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={mode}
+          variants={slideVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.25 }}
+        >
+          <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
+            {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
+          </h1>
+          <p className="mb-8 text-center text-muted-foreground">
+            {mode === "login" ? t("auth.signInSubtitle") : t("auth.signUpSubtitle")}
+          </p>
+        </motion.div>
+      </AnimatePresence>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Display name (signup) */}
+        <AnimatePresence>
+          {mode === "signup" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-2 pb-4">
+                <Label htmlFor="displayName">{t("auth.displayName")}</Label>
+                <div className="relative">
+                  <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder={t("auth.displayNamePlaceholder")}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="ps-10"
+                  />
+                </div>
+                {errors.displayName && <p className="text-sm text-destructive">{errors.displayName}</p>}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Email */}
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("auth.email")}</Label>
+          <div className="relative">
+            <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder={t("auth.emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="ps-10"
+              required
+            />
+          </div>
+          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">{t("auth.password")}</Label>
+            {mode === "login" && (
+              <button
+                type="button"
+                onClick={() => switchMode("forgot")}
+                className="text-xs text-primary hover:underline"
+              >
+                {t("auth.forgotPassword") || "Forgot password?"}
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="password"
+              type="password"
+              placeholder={t("auth.passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="ps-10"
+              required
+            />
+          </div>
+          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+        </div>
+
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {mode === "login" ? t("auth.signingIn") : t("auth.creatingAccount")}
+            </>
+          ) : mode === "login" ? (
+            t("auth.signIn")
+          ) : (
+            t("auth.createAccount")
+          )}
+        </Button>
+      </form>
+
+      {/* Divider */}
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-muted" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">
+            {t("auth.orContinueWith") || "Or continue with"}
+          </span>
+        </div>
+      </div>
+
+      {/* Google */}
+      <Button
+        variant="outline"
+        type="button"
+        className="w-full"
+        disabled={isGoogleLoading}
+        onClick={async () => {
+          try {
+            setIsGoogleLoading(true);
+            const { error } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: {
+                redirectTo: getGoogleRedirectUrl(),
+                queryParams: { access_type: "offline", prompt: "consent" },
+              },
+            });
+            if (error) throw error;
+          } catch (error: any) {
+            setIsGoogleLoading(false);
+            toast({
+              title: t("common.error") || "Error",
+              description: error.message || "Failed to sign in with Google",
+              variant: "destructive",
+            });
+          }
+        }}
+      >
+        {isGoogleLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <svg
+            className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`}
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 488 512"
+          >
+            <path
+              fill="currentColor"
+              d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+            />
+          </svg>
+        )}
+        {t("auth.google") || "Google"}
+      </Button>
+
+      {/* Switch login/signup */}
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={() => switchMode(mode === "login" ? "signup" : "login")}
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}
+        </button>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -191,282 +619,12 @@ const Auth = () => {
             </div>
 
             <AnimatePresence mode="wait">
-              {/* ——— Login / Signup header ——— */}
-              {(mode === "login" || mode === "signup") && (
-                <motion.div
-                  key={mode}
-                  variants={slideVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.25 }}
-                >
-                  <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
-                    {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
-                  </h1>
-                  <p className="mb-8 text-center text-muted-foreground">
-                    {mode === "login" ? t("auth.signInSubtitle") : t("auth.signUpSubtitle")}
-                  </p>
-                </motion.div>
-              )}
-
-              {/* ——— Forgot password header ——— */}
-              {mode === "forgot" && (
-                <motion.div
-                  key="forgot-header"
-                  variants={slideVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{ duration: 0.25 }}
-                >
-                  <div className="mb-4 flex justify-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                      <KeyRound className="h-7 w-7 text-primary" />
-                    </div>
-                  </div>
-                  <h1 className="mb-2 text-center font-display text-2xl font-bold text-foreground">
-                    {t("auth.forgotPassword") || "Forgot Password?"}
-                  </h1>
-                  <p className="mb-8 text-center text-sm text-muted-foreground">
-                    {t("auth.forgotPasswordDesc") || "Enter your email and we'll send you a reset link."}
-                  </p>
-                </motion.div>
-              )}
+              {passwordUpdated && renderPasswordUpdated()}
+              {!passwordUpdated && resetSent && renderResetSent()}
+              {!passwordUpdated && !resetSent && mode === "reset" && renderResetForm()}
+              {!passwordUpdated && !resetSent && mode === "forgot" && renderForgotForm()}
+              {!passwordUpdated && !resetSent && (mode === "login" || mode === "signup") && renderAuthForm()}
             </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-              {/* ——— Password reset success state ——— */}
-              {resetSent ? (
-                <motion.div
-                  key="reset-success"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center gap-4 py-4 text-center"
-                >
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-lg font-semibold text-foreground">
-                      {t("auth.resetEmailSent") || "Check your email"}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t("auth.resetEmailSentDesc") || `We've sent a password reset link to ${email}`}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="mt-2 w-full"
-                    onClick={() => switchMode("login")}
-                  >
-                    {t("auth.backToLogin") || "Back to Sign In"}
-                  </Button>
-                </motion.div>
-              ) : (
-                /* ——— Form ——— */
-                <motion.form
-                  key={mode + "-form"}
-                  onSubmit={handleSubmit}
-                  className="space-y-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {/* Display name (signup only) */}
-                  <AnimatePresence>
-                    {mode === "signup" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="space-y-2 pb-4">
-                          <Label htmlFor="displayName">{t("auth.displayName")}</Label>
-                          <div className="relative">
-                            <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              id="displayName"
-                              type="text"
-                              placeholder={t("auth.displayNamePlaceholder")}
-                              value={displayName}
-                              onChange={(e) => setDisplayName(e.target.value)}
-                              className="ps-10"
-                            />
-                          </div>
-                          {errors.displayName && (
-                            <p className="text-sm text-destructive">{errors.displayName}</p>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Email */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("auth.email")}</Label>
-                    <div className="relative">
-                      <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder={t("auth.emailPlaceholder")}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="ps-10"
-                        required
-                      />
-                    </div>
-                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                  </div>
-
-                  {/* Password (not for forgot) */}
-                  <AnimatePresence>
-                    {mode !== "forgot" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="password">{t("auth.password")}</Label>
-                            {mode === "login" && (
-                              <button
-                                type="button"
-                                onClick={() => switchMode("forgot")}
-                                className="text-xs text-primary hover:underline"
-                              >
-                                {t("auth.forgotPassword") || "Forgot password?"}
-                              </button>
-                            )}
-                          </div>
-                          <div className="relative">
-                            <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              id="password"
-                              type="password"
-                              placeholder={t("auth.passwordPlaceholder")}
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              className="ps-10"
-                              required={mode !== "forgot"}
-                            />
-                          </div>
-                          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Submit button */}
-                  <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {mode === "login"
-                          ? t("auth.signingIn")
-                          : mode === "signup"
-                            ? t("auth.creatingAccount")
-                            : (t("auth.sendingReset") || "Sending reset link...")}
-                      </>
-                    ) : mode === "login" ? (
-                      t("auth.signIn")
-                    ) : mode === "signup" ? (
-                      t("auth.createAccount")
-                    ) : (
-                      t("auth.sendResetLink") || "Send Reset Link"
-                    )}
-                  </Button>
-
-                  {/* Forgot password back link */}
-                  {mode === "forgot" && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full text-muted-foreground"
-                      onClick={() => switchMode("login")}
-                    >
-                      <BackArrow className="me-2 h-4 w-4" />
-                      {t("auth.backToLogin") || "Back to Sign In"}
-                    </Button>
-                  )}
-                </motion.form>
-              )}
-            </AnimatePresence>
-
-            {/* Google & social section — hide in forgot mode */}
-            {mode !== "forgot" && !resetSent && (
-              <>
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-muted" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">
-                      {t("auth.orContinueWith") || "Or continue with"}
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  type="button"
-                  className="w-full"
-                  disabled={isGoogleLoading}
-                  onClick={async () => {
-                    try {
-                      setIsGoogleLoading(true);
-                      const { error } = await supabase.auth.signInWithOAuth({
-                        provider: "google",
-                        options: {
-                          redirectTo: getGoogleRedirectUrl(),
-                          queryParams: { access_type: "offline", prompt: "consent" },
-                        },
-                      });
-                      if (error) throw error;
-                    } catch (error: any) {
-                      setIsGoogleLoading(false);
-                      toast({
-                        title: t("common.error") || "Error",
-                        description: error.message || "Failed to sign in with Google",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  {isGoogleLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <svg
-                      className={`${dir === "rtl" ? "ml-2" : "mr-2"} h-4 w-4`}
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 488 512"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                      />
-                    </svg>
-                  )}
-                  {t("auth.google") || "Google"}
-                </Button>
-
-                <div className="mt-6 text-center">
-                  <button
-                    type="button"
-                    onClick={() => switchMode(mode === "login" ? "signup" : "login")}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}
-                  </button>
-                </div>
-              </>
-            )}
           </motion.div>
         </div>
       </div>
