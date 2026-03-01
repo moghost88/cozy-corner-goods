@@ -539,6 +539,34 @@ const translations = {
 
     // Nav Orders
     "nav.orders": "طلباتي",
+
+    // Auth extras
+    "auth.accountType": "أريد أن",
+    "auth.roleClient": "تسوق وشراء",
+    "auth.roleSeller": "بيع المنتجات",
+    "auth.loginRequired": "يجب تسجيل الدخول",
+    "auth.loginRequiredCart": "يرجى تسجيل الدخول لإضافة المنتجات إلى سلة التسوق.",
+    "auth.loginRequiredWishlist": "يرجى تسجيل الدخول لإضافة المنتجات إلى قائمة الأمنيات.",
+    "auth.forgotPassword": "نسيت كلمة المرور؟",
+    "auth.forgotPasswordDesc": "أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.",
+    "auth.sendResetLink": "إرسال رابط إعادة التعيين",
+    "auth.sendingReset": "جاري الإرسال...",
+    "auth.resetEmailSent": "تحقق من بريدك الإلكتروني",
+    "auth.resetEmailSentDesc": "لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك.",
+    "auth.backToLogin": "العودة لتسجيل الدخول",
+    "auth.setNewPassword": "تعيين كلمة مرور جديدة",
+    "auth.setNewPasswordDesc": "أدخل كلمة المرور الجديدة أدناه.",
+    "auth.newPassword": "كلمة المرور الجديدة",
+    "auth.newPasswordPlaceholder": "أدخل كلمة المرور الجديدة",
+    "auth.confirmPassword": "تأكيد كلمة المرور",
+    "auth.confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "auth.updatePassword": "تحديث كلمة المرور",
+    "auth.updatingPassword": "جاري التحديث...",
+    "auth.passwordUpdated": "تم تحديث كلمة المرور!",
+    "auth.passwordUpdatedDesc": "تم تحديث كلمة المرور. يمكنك الآن تسجيل الدخول.",
+    "auth.goToHome": "الذهاب للرئيسية",
+    "auth.orContinueWith": "أو المتابعة عبر",
+    "auth.google": "جوجل",
   },
   en: {
     // Navbar
@@ -866,21 +894,56 @@ const translations = {
     // Nav Orders
     "nav.orders": "My Orders",
 
+    // Auth extras
+    "auth.accountType": "I want to",
+    "auth.roleClient": "Shop & Buy",
+    "auth.roleSeller": "Sell Products",
+    "auth.loginRequired": "Sign in required",
+    "auth.loginRequiredCart": "Please sign in to add items to your cart.",
+    "auth.loginRequiredWishlist": "Please sign in to add items to your wishlist.",
+    "auth.forgotPassword": "Forgot password?",
+    "auth.forgotPasswordDesc": "Enter your email and we'll send you a reset link.",
+    "auth.sendResetLink": "Send Reset Link",
+    "auth.sendingReset": "Sending...",
+    "auth.resetEmailSent": "Check your email",
+    "auth.resetEmailSentDesc": "We've sent a password reset link to your email.",
+    "auth.backToLogin": "Back to Sign In",
+    "auth.setNewPassword": "Set New Password",
+    "auth.setNewPasswordDesc": "Enter your new password below.",
+    "auth.newPassword": "New Password",
+    "auth.newPasswordPlaceholder": "Enter new password",
+    "auth.confirmPassword": "Confirm Password",
+    "auth.confirmPasswordPlaceholder": "Confirm new password",
+    "auth.updatePassword": "Update Password",
+    "auth.updatingPassword": "Updating...",
+    "auth.passwordUpdated": "Password Updated!",
+    "auth.passwordUpdatedDesc": "Your password has been updated. You can now sign in.",
+    "auth.goToHome": "Go to Home",
+    "auth.orContinueWith": "Or continue with",
+    "auth.google": "Google",
+
     "dir": "ltr",
   },
 };
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType & { transitioning: boolean } | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("language");
     return (saved as Language) || "ar";
   });
+  const [transitioning, setTransitioning] = useState(false);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem("language", lang);
+    if (lang === language) return;
+    setTransitioning(true);
+    // Brief fade-out, then switch, then fade-in
+    setTimeout(() => {
+      setLanguageState(lang);
+      localStorage.setItem("language", lang);
+      setTimeout(() => setTransitioning(false), 50);
+    }, 200);
   };
 
   const t = (key: string): string => {
@@ -895,8 +958,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [language, dir]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, dir }}>
-      {children}
+    <LanguageContext.Provider value={{ language, setLanguage, t, dir, transitioning }}>
+      <div
+        className="lang-transition-wrapper"
+        style={{
+          opacity: transitioning ? 0 : 1,
+          transform: transitioning ? "scale(0.98)" : "scale(1)",
+          transition: "opacity 0.2s ease, transform 0.2s ease",
+        }}
+      >
+        {children}
+      </div>
     </LanguageContext.Provider>
   );
 };
@@ -908,3 +980,4 @@ export const useLanguage = () => {
   }
   return context;
 };
+

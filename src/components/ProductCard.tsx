@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/data/products";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <motion.div
@@ -63,7 +66,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             if (isInWishlist(product.id)) {
               removeFromWishlist(product.id);
             } else {
-              addToWishlist(product);
+              const added = addToWishlist(product);
+              if (!added) navigate("/auth");
             }
           }}
           className={`absolute ${t("dir") === "rtl" ? "left-3" : "right-3"} top-3 z-10 rounded-full bg-background/80 p-2 backdrop-blur-sm transition-all hover:bg-background`}
@@ -115,7 +119,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                addToCart(product);
+                const added = addToCart(product);
+                if (!added) navigate("/auth");
               }}
               aria-label={t("products.addToCart")}
             >

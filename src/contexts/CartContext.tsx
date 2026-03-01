@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Product } from '@/data/products';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from './LanguageContext';
+import { useAuth } from './AuthContext';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -10,7 +11,7 @@ export interface CartItem extends Product {
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product) => boolean;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -29,6 +30,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -39,7 +41,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const { t } = useLanguage();
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product): boolean => {
+    if (!user) {
+      toast({
+        title: t("auth.loginRequired") || "Sign in required",
+        description: t("auth.loginRequiredCart") || "Please sign in to add items to your cart.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
@@ -58,6 +69,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return [...prev, { ...product, quantity: 1 }];
     });
     setIsCartOpen(true);
+    return true;
   };
 
   const removeFromCart = (productId: string) => {

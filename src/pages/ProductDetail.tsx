@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ArrowLeft, Star, Download, ShoppingCart, Heart, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { addToRecentlyViewed } from "@/components/RecentlyViewed";
 import ReviewList from "@/components/reviews/ReviewList";
 import RelatedProducts from "@/components/RelatedProducts";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 const ProductDetail = () => {
@@ -21,6 +22,8 @@ const ProductDetail = () => {
   const product = products.find((p) => p.id === id);
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Track recently viewed
   useEffect(() => {
@@ -96,7 +99,8 @@ const ProductDetail = () => {
                     if (isInWishlist(product.id)) {
                       removeFromWishlist(product.id);
                     } else {
-                      addToWishlist(product);
+                      const added = addToWishlist(product);
+                      if (!added) navigate("/auth");
                     }
                   }}
                   aria-label={isInWishlist(product.id) ? t("products.removeFromWishlist") : t("products.addToWishlist")}
@@ -182,7 +186,10 @@ const ProductDetail = () => {
                 variant="hero"
                 size="xl"
                 className="mb-3 w-full gap-2"
-                onClick={() => addToCart(product)}
+                onClick={() => {
+                  const added = addToCart(product);
+                  if (!added) navigate("/auth");
+                }}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {t("products.addToCart")}

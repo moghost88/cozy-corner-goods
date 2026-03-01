@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, ArrowRight, Mail, Lock, User,
   Loader2, KeyRound, CheckCircle2, ShieldCheck,
+  Store, ShoppingBag,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -39,6 +40,7 @@ const Auth = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const [role, setRole] = useState<"client" | "seller">("client");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { signIn, signUp, user, isRecovery, updatePassword, clearRecovery } = useAuth();
@@ -128,7 +130,7 @@ const Auth = () => {
           navigate("/");
         }
       } else if (mode === "signup") {
-        const { error } = await signUp(email, password, displayName);
+        const { error } = await signUp(email, password, displayName, role);
         if (error) {
           toast({
             title: error.message.includes("already registered")
@@ -451,6 +453,50 @@ const Auth = () => {
                   />
                 </div>
                 {errors.displayName && <p className="text-sm text-destructive">{errors.displayName}</p>}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Role selector (signup only) */}
+        <AnimatePresence>
+          {mode === "signup" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-2 pb-4">
+                <Label>{t("auth.accountType") || "I want to"}</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRole("client")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 ${role === "client"
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-muted-foreground/30"
+                      }`}
+                  >
+                    <ShoppingBag className={`h-6 w-6 ${role === "client" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium ${role === "client" ? "text-primary" : "text-muted-foreground"}`}>
+                      {t("auth.roleClient") || "Shop & Buy"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("seller")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 ${role === "seller"
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-muted-foreground/30"
+                      }`}
+                  >
+                    <Store className={`h-6 w-6 ${role === "seller" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium ${role === "seller" ? "text-primary" : "text-muted-foreground"}`}>
+                      {t("auth.roleSeller") || "Sell Products"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
