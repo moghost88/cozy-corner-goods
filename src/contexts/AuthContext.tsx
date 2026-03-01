@@ -26,14 +26,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let isMounted = true;
 
     /**
-     * Consume auth tokens that were extracted from the URL hash
-     * by main.tsx BEFORE React mounted (prevents HashRouter race condition).
+     * PKCE flow: Exchange the ?code= parameter for a session.
+     * The code was extracted from the URL by main.tsx before React mounted.
      */
-    const consumeStoredTokens = async () => {
+    const exchangePKCECode = async (): Promise<boolean> => {
+      const code = sessionStorage.getItem("__supabase_pkce_code");
+      if (!code) return false;
+
+      // Remove immediately to prevent double-exchange
+      sessionStorage.removeItem("__supabase_pkce_code");
+
+      try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          console.error("PKCE code exchange failed:", error.message);
+          return false;
+        }
+
+        if (isMounted && data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+        return true;
+      } catch (err) {
+        console.error("PKCE exchange error:", err);
+        return false;
+      }
+    };
+
+    /**
+     * Legacy fallback: Consume implicit flow tokens stored by main.tsx.
+     */
+    const consumeStoredTokens = async (): Promise<boolean> => {
       const stored = sessionStorage.getItem("__supabase_auth_tokens");
       if (!stored) return false;
 
-      // Remove immediately so we don't re-process on re-render
       sessionStorage.removeItem("__supabase_auth_tokens");
 
       try {
@@ -54,7 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setSession(data.session);
             setUser(data.session.user);
 
-            // If this is a password recovery flow, flag it
             if (type === "recovery") {
               setIsRecovery(true);
             }
@@ -68,11 +95,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const initialize = async () => {
-      // First, try to consume tokens from OAuth/recovery redirect
-      const wasRedirect = await consumeStoredTokens();
+      // 1. Try PKCE code exchange first (primary flow)
+      let wasRedirect = await exchangePKCECode();
 
+      // 2. Fallback: try implicit flow tokens
       if (!wasRedirect) {
-        // No redirect — check for existing session
+        wasRedirect = await consumeStoredTokens();
+      }
+
+      // 3. No redirect — check for existing session
+      if (!wasRedirect) {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (isMounted) {
           setSession(existingSession);
@@ -87,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initialize();
 
-    // Listen for future auth state changes (sign-in, sign-out, token refresh)
+    // Listen for future auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (isMounted) {

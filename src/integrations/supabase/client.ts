@@ -13,9 +13,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-    // IMPORTANT: We set detectSessionInUrl to FALSE because we handle
-    // OAuth/recovery hash tokens manually in main.tsx (before React mounts).
-    // This prevents Supabase from interfering with HashRouter's hash.
+    // PKCE flow returns auth codes as ?code= query params instead of
+    // #access_token= hash fragments. This is critical because:
+    // 1. HashRouter uses # for routing — hash tokens conflict
+    // 2. Lovable's email tracker strips hash fragments from URLs
+    // Query params survive both issues.
+    flowType: 'pkce',
+    // We handle the ?code= param manually in main.tsx before React mounts,
+    // so disable Supabase's automatic URL detection.
     detectSessionInUrl: false,
   }
 });
