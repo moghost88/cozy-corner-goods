@@ -169,6 +169,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  // SECURITY: Auto-logout on inactivity (30 minutes)
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.log("Session expired due to inactivity");
+        signOut();
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    // Listen for user activity
+    const events = ["mousedown", "keydown", "touchstart", "scroll"];
+    events.forEach((event) => window.addEventListener(event, resetTimer, { passive: true }));
+
+    // Start the timer
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+    };
+  }, [user]);
+
   const updatePassword = async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,

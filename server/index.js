@@ -8,7 +8,71 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// ===== SECURITY: Rate Limiter (in-memory) =====
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100; // per window
+
+function rateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+    if (!rateLimitMap.has(ip)) {
+        rateLimitMap.set(ip, []);
+    }
+
+    const requests = rateLimitMap.get(ip).filter((t) => t > windowStart);
+    requests.push(now);
+    rateLimitMap.set(ip, requests);
+
+    if (requests.length > RATE_LIMIT_MAX_REQUESTS) {
+        return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+
+    // Set rate limit headers
+    res.setHeader("X-RateLimit-Limit", RATE_LIMIT_MAX_REQUESTS);
+    res.setHeader("X-RateLimit-Remaining", Math.max(0, RATE_LIMIT_MAX_REQUESTS - requests.length));
+    next();
+}
+
+// Stricter rate limit for auth-sensitive endpoints
+const AUTH_RATE_LIMIT_MAX = 10; // 10 per 15 min
+function authRateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress;
+    const key = `auth:${ip}`;
+    const now = Date.now();
+    const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+    if (!rateLimitMap.has(key)) {
+        rateLimitMap.set(key, []);
+    }
+
+    const requests = rateLimitMap.get(key).filter((t) => t > windowStart);
+    requests.push(now);
+    rateLimitMap.set(key, requests);
+
+    if (requests.length > AUTH_RATE_LIMIT_MAX) {
+        return res.status(429).json({ error: "Too many authentication attempts. Please try again later." });
+    }
+
+    next();
+}
+
+// Clean up rate limit map periodically
+setInterval(() => {
+    const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS;
+    for (const [key, timestamps] of rateLimitMap.entries()) {
+        const filtered = timestamps.filter((t) => t > cutoff);
+        if (filtered.length === 0) {
+            rateLimitMap.delete(key);
+        } else {
+            rateLimitMap.set(key, filtered);
+        }
+    }
+}, 5 * 60 * 1000); // every 5 min
+
+// ===== MIDDLEWARE =====
 app.use(cors({
     origin: [
         "http://localhost:8080",
@@ -16,14 +80,79 @@ app.use(cors({
         "https://moghost88.github.io",
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 }));
-app.use(express.json());
+
+// SECURITY: Limit request body size to prevent DoS
+app.use(express.json({ limit: "1mb" }));
+
+// SECURITY: Set security headers on all responses
+app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    next();
+});
+
+// Apply global rate limiting
+app.use(rateLimit);
 
 // Supabase Admin Client (server-side)
 const supabase = createClient(
     process.env.SUPABASE_URL || "",
     process.env.SUPABASE_SERVICE_KEY || ""
 );
+
+// ===== SECURITY: Auth Middleware =====
+// Validates the JWT token from the Authorization header
+async function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Unauthorized: Missing or invalid token" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return res.status(401).json({ error: "Unauthorized: Invalid token" });
+        }
+
+        // Attach user to request for downstream handlers
+        req.user = user;
+        next();
+    } catch (err) {
+        console.error("Auth middleware error:", err);
+        return res.status(401).json({ error: "Unauthorized: Token verification failed" });
+    }
+}
+
+// ===== SECURITY: Input Sanitization =====
+// Escape special characters used in SQL LIKE patterns
+function sanitizeLikeInput(input) {
+    if (typeof input !== "string") return "";
+    return input
+        .replace(/\\/g, "\\\\")
+        .replace(/%/g, "\\%")
+        .replace(/_/g, "\\_")
+        .trim()
+        .substring(0, 200); // Max 200 chars to prevent abuse
+}
+
+// Basic string sanitizer — strips HTML tags and trims
+function sanitizeString(input, maxLength = 500) {
+    if (typeof input !== "string") return "";
+    return input
+        .replace(/<[^>]*>/g, "") // Strip HTML tags
+        .trim()
+        .substring(0, maxLength);
+}
 
 // ===== HEALTH CHECK =====
 app.get("/api/health", (req, res) => {
@@ -32,17 +161,26 @@ app.get("/api/health", (req, res) => {
 
 // ===== PRODUCTS =====
 
-// GET all products (with optional filters)
+// GET all products (with optional filters) — PUBLIC
 app.get("/api/products", async (req, res) => {
     try {
         const { category, search, sort, page = 1, limit = 12 } = req.query;
+
+        // SECURITY: Validate and sanitize pagination
+        const safePage = Math.max(1, Math.min(parseInt(page) || 1, 1000));
+        const safeLimit = Math.max(1, Math.min(parseInt(limit) || 12, 50));
+
         let query = supabase.from("products").select("*", { count: "exact" });
 
         if (category && category !== "all") {
-            query = query.eq("category", category);
+            query = query.eq("category", sanitizeString(String(category), 50));
         }
         if (search) {
-            query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+            // SECURITY: Sanitize search to prevent SQL/LIKE injection
+            const safeSearch = sanitizeLikeInput(String(search));
+            if (safeSearch) {
+                query = query.or(`name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`);
+            }
         }
         if (sort === "price-asc") query = query.order("price", { ascending: true });
         else if (sort === "price-desc") query = query.order("price", { ascending: false });
@@ -50,8 +188,8 @@ app.get("/api/products", async (req, res) => {
         else query = query.order("created_at", { ascending: false });
 
         // Pagination
-        const from = (Number(page) - 1) * Number(limit);
-        const to = from + Number(limit) - 1;
+        const from = (safePage - 1) * safeLimit;
+        const to = from + safeLimit - 1;
         query = query.range(from, to);
 
         const { data, error, count } = await query;
@@ -60,8 +198,8 @@ app.get("/api/products", async (req, res) => {
         res.json({
             products: data,
             total: count,
-            page: Number(page),
-            totalPages: Math.ceil((count || 0) / Number(limit)),
+            page: safePage,
+            totalPages: Math.ceil((count || 0) / safeLimit),
         });
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -69,7 +207,7 @@ app.get("/api/products", async (req, res) => {
     }
 });
 
-// GET single product
+// GET single product — PUBLIC
 app.get("/api/products/:id", async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -88,21 +226,30 @@ app.get("/api/products/:id", async (req, res) => {
     }
 });
 
-// POST create product (seller)
-app.post("/api/products", async (req, res) => {
+// POST create product (seller) — REQUIRES AUTH
+app.post("/api/products", requireAuth, async (req, res) => {
     try {
-        const { name, description, price, category, image, creator_id } = req.body;
+        const { name, description, price, category, image } = req.body;
 
-        if (!name || !price || !category || !creator_id) {
+        // SECURITY: Use authenticated user's ID, not from request body
+        const creator_id = req.user.id;
+
+        if (!name || !price || !category) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
+        // Validate price
+        const safePrice = parseFloat(price);
+        if (isNaN(safePrice) || safePrice < 0 || safePrice > 999999) {
+            return res.status(400).json({ error: "Invalid price" });
+        }
+
         const { data, error } = await supabase.from("products").insert({
-            name,
-            description,
-            price: parseFloat(price),
-            category,
-            image: image || null,
+            name: sanitizeString(name, 200),
+            description: sanitizeString(description, 2000),
+            price: safePrice,
+            category: sanitizeString(category, 50),
+            image: image ? sanitizeString(image, 2000) : null,
             creator_id,
         }).select().single();
 
@@ -114,13 +261,36 @@ app.post("/api/products", async (req, res) => {
     }
 });
 
-// PUT update product
-app.put("/api/products/:id", async (req, res) => {
+// PUT update product — REQUIRES AUTH + OWNERSHIP
+app.put("/api/products/:id", requireAuth, async (req, res) => {
     try {
+        // SECURITY: Verify ownership before updating
+        const { data: existing } = await supabase
+            .from("products")
+            .select("creator_id")
+            .eq("id", req.params.id)
+            .single();
+
+        if (!existing || existing.creator_id !== req.user.id) {
+            return res.status(403).json({ error: "Forbidden: You don't own this product" });
+        }
+
         const { name, description, price, category, image } = req.body;
+
+        const safePrice = parseFloat(price);
+        if (isNaN(safePrice) || safePrice < 0 || safePrice > 999999) {
+            return res.status(400).json({ error: "Invalid price" });
+        }
+
         const { data, error } = await supabase
             .from("products")
-            .update({ name, description, price: parseFloat(price), category, image })
+            .update({
+                name: sanitizeString(name, 200),
+                description: sanitizeString(description, 2000),
+                price: safePrice,
+                category: sanitizeString(category, 50),
+                image: image ? sanitizeString(image, 2000) : null,
+            })
             .eq("id", req.params.id)
             .select()
             .single();
@@ -133,9 +303,20 @@ app.put("/api/products/:id", async (req, res) => {
     }
 });
 
-// DELETE product
-app.delete("/api/products/:id", async (req, res) => {
+// DELETE product — REQUIRES AUTH + OWNERSHIP
+app.delete("/api/products/:id", requireAuth, async (req, res) => {
     try {
+        // SECURITY: Verify ownership before deleting
+        const { data: existing } = await supabase
+            .from("products")
+            .select("creator_id")
+            .eq("id", req.params.id)
+            .single();
+
+        if (!existing || existing.creator_id !== req.user.id) {
+            return res.status(403).json({ error: "Forbidden: You don't own this product" });
+        }
+
         const { error } = await supabase
             .from("products")
             .delete()
@@ -151,9 +332,14 @@ app.delete("/api/products/:id", async (req, res) => {
 
 // ===== ORDERS =====
 
-// GET user orders
-app.get("/api/orders/:userId", async (req, res) => {
+// GET user orders — REQUIRES AUTH + MUST BE OWN DATA
+app.get("/api/orders/:userId", requireAuth, async (req, res) => {
     try {
+        // SECURITY: Users can only access their own orders
+        if (req.user.id !== req.params.userId) {
+            return res.status(403).json({ error: "Forbidden: Cannot access other users' orders" });
+        }
+
         const { data, error } = await supabase
             .from("purchases")
             .select("*")
@@ -168,20 +354,27 @@ app.get("/api/orders/:userId", async (req, res) => {
     }
 });
 
-// POST create order
-app.post("/api/orders", async (req, res) => {
+// POST create order — REQUIRES AUTH
+app.post("/api/orders", requireAuth, async (req, res) => {
     try {
-        const { items, userId } = req.body;
+        const { items } = req.body;
 
-        if (!items?.length || !userId) {
-            return res.status(400).json({ error: "Missing required fields" });
+        // SECURITY: Use authenticated user's ID
+        const userId = req.user.id;
+
+        if (!items?.length) {
+            return res.status(400).json({ error: "Cart is empty" });
+        }
+
+        if (items.length > 50) {
+            return res.status(400).json({ error: "Too many items in cart" });
         }
 
         const purchases = items.map((item) => ({
             user_id: userId,
-            product_id: item.id,
-            product_name: item.name,
-            price: item.price * item.quantity,
+            product_id: sanitizeString(item.id, 100),
+            product_name: sanitizeString(item.name, 200),
+            price: Math.max(0, parseFloat(item.price) * parseInt(item.quantity) || 0),
             purchased_at: new Date().toISOString(),
         }));
 
@@ -197,9 +390,13 @@ app.post("/api/orders", async (req, res) => {
 
 // ===== PROFILES =====
 
-// GET user profile
-app.get("/api/profile/:userId", async (req, res) => {
+// GET user profile — REQUIRES AUTH + MUST BE OWN DATA
+app.get("/api/profile/:userId", requireAuth, async (req, res) => {
     try {
+        if (req.user.id !== req.params.userId) {
+            return res.status(403).json({ error: "Forbidden: Cannot access other users' profiles" });
+        }
+
         const { data, error } = await supabase
             .from("profiles")
             .select("*")
@@ -214,16 +411,20 @@ app.get("/api/profile/:userId", async (req, res) => {
     }
 });
 
-// PUT update profile
-app.put("/api/profile/:userId", async (req, res) => {
+// PUT update profile — REQUIRES AUTH + MUST BE OWN DATA
+app.put("/api/profile/:userId", requireAuth, async (req, res) => {
     try {
+        if (req.user.id !== req.params.userId) {
+            return res.status(403).json({ error: "Forbidden: Cannot modify other users' profiles" });
+        }
+
         const { display_name, avatar_url } = req.body;
         const { data, error } = await supabase
             .from("profiles")
             .upsert({
                 user_id: req.params.userId,
-                display_name,
-                avatar_url,
+                display_name: sanitizeString(display_name, 100),
+                avatar_url: avatar_url ? sanitizeString(avatar_url, 2000) : null,
                 updated_at: new Date().toISOString(),
             })
             .select()
@@ -239,7 +440,7 @@ app.put("/api/profile/:userId", async (req, res) => {
 
 // ===== REVIEWS =====
 
-// GET reviews for a product
+// GET reviews for a product — PUBLIC
 app.get("/api/reviews/:productId", async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -256,13 +457,26 @@ app.get("/api/reviews/:productId", async (req, res) => {
     }
 });
 
-// POST create review
-app.post("/api/reviews", async (req, res) => {
+// POST create review — REQUIRES AUTH
+app.post("/api/reviews", requireAuth, async (req, res) => {
     try {
-        const { product_id, user_id, rating, comment, user_name } = req.body;
+        const { product_id, rating, comment, user_name } = req.body;
+
+        // SECURITY: Use authenticated user, validate rating
+        const safeRating = Math.max(1, Math.min(5, parseInt(rating) || 0));
+        if (!safeRating) {
+            return res.status(400).json({ error: "Invalid rating (must be 1-5)" });
+        }
+
         const { data, error } = await supabase
             .from("reviews")
-            .insert({ product_id, user_id, rating, comment, user_name })
+            .insert({
+                product_id: sanitizeString(product_id, 100),
+                user_id: req.user.id,
+                rating: safeRating,
+                comment: sanitizeString(comment, 1000),
+                user_name: sanitizeString(user_name, 100),
+            })
             .select()
             .single();
 
@@ -276,13 +490,22 @@ app.post("/api/reviews", async (req, res) => {
 
 // ===== PAYMOB PAYMENT =====
 
-// Step 1: Initiate payment — authenticates, registers order, generates payment key
-app.post("/api/paymob/pay", async (req, res) => {
+// POST initiate payment — REQUIRES AUTH
+app.post("/api/paymob/pay", requireAuth, async (req, res) => {
     try {
-        const { amount, currency, items, billingData, userId } = req.body;
+        const { amount, currency, items, billingData } = req.body;
+
+        // SECURITY: Use authenticated user's ID
+        const userId = req.user.id;
 
         if (!amount || !billingData) {
             return res.status(400).json({ error: "Missing required payment fields" });
+        }
+
+        // Validate amount
+        const safeAmount = parseFloat(amount);
+        if (isNaN(safeAmount) || safeAmount <= 0 || safeAmount > 1000000) {
+            return res.status(400).json({ error: "Invalid payment amount" });
         }
 
         const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
@@ -309,12 +532,12 @@ app.post("/api/paymob/pay", async (req, res) => {
         const authToken = authData.token;
 
         // 2. Order Registration
-        const amountCents = Math.round(amount * 100);
-        const orderItems = (items || []).map((item) => ({
-            name: item.name || "Product",
-            amount_cents: Math.round((item.price || 0) * 100),
-            quantity: item.quantity || 1,
-            description: item.description || "",
+        const amountCents = Math.round(safeAmount * 100);
+        const orderItems = (items || []).slice(0, 50).map((item) => ({
+            name: sanitizeString(item.name || "Product", 200),
+            amount_cents: Math.round((parseFloat(item.price) || 0) * 100),
+            quantity: Math.max(1, Math.min(parseInt(item.quantity) || 1, 100)),
+            description: sanitizeString(item.description || "", 500),
         }));
 
         const orderResponse = await fetch("https://accept.paymob.com/api/ecommerce/orders", {
@@ -346,19 +569,19 @@ app.post("/api/paymob/pay", async (req, res) => {
                 expiration: 3600,
                 order_id: orderData.id,
                 billing_data: {
-                    first_name: billingData.firstName || "N/A",
-                    last_name: billingData.lastName || "N/A",
-                    email: billingData.email || "customer@email.com",
-                    phone_number: billingData.phone || "+201000000000",
-                    apartment: billingData.apartment || "N/A",
-                    floor: billingData.floor || "N/A",
-                    street: billingData.street || "N/A",
-                    building: billingData.building || "N/A",
+                    first_name: sanitizeString(billingData.firstName || "N/A", 50),
+                    last_name: sanitizeString(billingData.lastName || "N/A", 50),
+                    email: sanitizeString(billingData.email || "customer@email.com", 200),
+                    phone_number: sanitizeString(billingData.phone || "+201000000000", 20),
+                    apartment: "N/A",
+                    floor: "N/A",
+                    street: sanitizeString(billingData.street || "N/A", 200),
+                    building: "N/A",
                     shipping_method: "N/A",
-                    postal_code: billingData.postalCode || "00000",
-                    city: billingData.city || "Cairo",
-                    country: billingData.country || "EG",
-                    state: billingData.state || "Cairo",
+                    postal_code: sanitizeString(billingData.postalCode || "00000", 10),
+                    city: sanitizeString(billingData.city || "Cairo", 100),
+                    country: sanitizeString(billingData.country || "EG", 5),
+                    state: sanitizeString(billingData.state || "Cairo", 100),
                 },
                 currency: currency || "EGP",
                 integration_id: parseInt(PAYMOB_INTEGRATION_ID),
@@ -383,14 +606,19 @@ app.post("/api/paymob/pay", async (req, res) => {
     }
 });
 
-// Step 2: Paymob transaction callback (webhook)
+// Paymob transaction callback (webhook) — NO AUTH (called by Paymob servers)
 app.post("/api/paymob/callback", async (req, res) => {
     try {
         const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET;
         const { obj, hmac } = req.body;
 
-        // Verify HMAC if secret is configured
-        if (PAYMOB_HMAC_SECRET && hmac) {
+        // SECURITY: HMAC verification is REQUIRED in production
+        if (!PAYMOB_HMAC_SECRET) {
+            console.error("PAYMOB_HMAC_SECRET not configured — rejecting callback");
+            return res.status(500).json({ error: "Server misconfigured" });
+        }
+
+        if (hmac) {
             const { createHmac } = await import("crypto");
             const concatenatedString = [
                 obj.amount_cents,
@@ -420,16 +648,18 @@ app.post("/api/paymob/callback", async (req, res) => {
                 .digest("hex");
 
             if (calculatedHmac !== hmac) {
-                console.error("HMAC verification failed");
+                console.error("HMAC verification failed — potential tampering");
                 return res.status(403).json({ error: "Invalid HMAC" });
             }
+        } else {
+            // No HMAC provided — reject
+            return res.status(400).json({ error: "Missing HMAC signature" });
         }
 
         // Process the payment result
         if (obj.success === true) {
             console.log(`✅ Payment successful: Order ${obj.order?.id}, Amount: ${obj.amount_cents / 100} ${obj.currency}`);
 
-            // Store the successful transaction in Supabase
             try {
                 await supabase.from("payments").insert({
                     paymob_order_id: String(obj.order?.id || obj.order),
@@ -454,12 +684,11 @@ app.post("/api/paymob/callback", async (req, res) => {
     }
 });
 
-// Step 3: Verify transaction status (called by frontend after redirect)
-app.get("/api/paymob/verify/:transactionId", async (req, res) => {
+// Verify transaction — REQUIRES AUTH
+app.get("/api/paymob/verify/:transactionId", requireAuth, async (req, res) => {
     try {
         const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
 
-        // Get auth token
         const authResponse = await fetch("https://accept.paymob.com/api/auth/tokens", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -467,7 +696,6 @@ app.get("/api/paymob/verify/:transactionId", async (req, res) => {
         });
         const authData = await authResponse.json();
 
-        // Get transaction details
         const txResponse = await fetch(
             `https://accept.paymob.com/api/acceptance/transactions/${req.params.transactionId}`,
             {
@@ -493,18 +721,34 @@ app.get("/api/paymob/verify/:transactionId", async (req, res) => {
 });
 
 // ===== NEWSLETTER =====
-app.post("/api/newsletter", async (req, res) => {
+app.post("/api/newsletter", authRateLimit, async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ error: "Email required" });
+        if (!email || typeof email !== "string") return res.status(400).json({ error: "Email required" });
 
-        // Store in a newsletter table (create if exists)
-        console.log(`Newsletter signup: ${email}`);
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email) || email.length > 254) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        console.log(`Newsletter signup: ${sanitizeString(email, 254)}`);
         res.json({ message: "Subscribed successfully" });
     } catch (error) {
         console.error("Error subscribing:", error);
         res.status(500).json({ error: "Failed to subscribe" });
     }
+});
+
+// ===== 404 handler =====
+app.use((req, res) => {
+    res.status(404).json({ error: "Not found" });
+});
+
+// ===== Error handler =====
+app.use((err, req, res, next) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: "Internal server error" });
 });
 
 // Start server
@@ -513,7 +757,7 @@ app.listen(PORT, () => {
   🚀 Cozy Corner Goods API Server
   ================================
   Port:     ${PORT}
-  Status:   Running
+  Status:   Running (SECURED)
   Health:   http://localhost:${PORT}/api/health
   ================================
   `);

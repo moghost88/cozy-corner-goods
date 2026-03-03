@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +42,29 @@ const Auth = () => {
   const [passwordUpdated, setPasswordUpdated] = useState(false);
   const [role, setRole] = useState<"client" | "seller">("client");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // SECURITY: Client-side rate limiting
+  const [submitCount, setSubmitCount] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [lockCountdown, setLockCountdown] = useState(0);
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockedUntil(null);
+        setSubmitCount(0);
+        setLockCountdown(0);
+      } else {
+        setLockCountdown(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
 
   const { signIn, signUp, user, isRecovery, updatePassword, clearRecovery } = useAuth();
   const { t, dir } = useLanguage();
@@ -109,6 +132,23 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // SECURITY: Check rate limit
+    if (lockedUntil && Date.now() < lockedUntil) {
+      toast({
+        title: t("auth.tooManyAttempts") || "Too many attempts",
+        description: `${t("auth.tryAgainIn") || "Try again in"} ${lockCountdown}s`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCount = submitCount + 1;
+    setSubmitCount(newCount);
+    if (newCount >= MAX_ATTEMPTS) {
+      setLockedUntil(Date.now() + LOCKOUT_DURATION_MS);
+    }
+
     setLoading(true);
 
     try {
@@ -450,6 +490,7 @@ const Auth = () => {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="ps-10"
+                    maxLength={100}
                   />
                 </div>
                 {errors.displayName && <p className="text-sm text-destructive">{errors.displayName}</p>}
@@ -474,8 +515,8 @@ const Auth = () => {
                     type="button"
                     onClick={() => setRole("client")}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 ${role === "client"
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border bg-card hover:border-muted-foreground/30"
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border bg-card hover:border-muted-foreground/30"
                       }`}
                   >
                     <ShoppingBag className={`h-6 w-6 ${role === "client" ? "text-primary" : "text-muted-foreground"}`} />
@@ -487,8 +528,8 @@ const Auth = () => {
                     type="button"
                     onClick={() => setRole("seller")}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 ${role === "seller"
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border bg-card hover:border-muted-foreground/30"
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border bg-card hover:border-muted-foreground/30"
                       }`}
                   >
                     <Store className={`h-6 w-6 ${role === "seller" ? "text-primary" : "text-muted-foreground"}`} />
@@ -515,6 +556,7 @@ const Auth = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="ps-10"
               required
+              maxLength={254}
             />
           </div>
           {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
@@ -544,12 +586,13 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="ps-10"
               required
+              maxLength={128}
             />
           </div>
           {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
         </div>
 
-        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading || (lockedUntil !== null && Date.now() < lockedUntil)}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

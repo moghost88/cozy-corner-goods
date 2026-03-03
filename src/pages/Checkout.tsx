@@ -133,6 +133,17 @@ const Checkout = () => {
     const handlePaymentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // SECURITY: Verify user is authenticated before processing payment
+        if (!user) {
+            toast({
+                title: "Authentication Required",
+                description: "Please sign in to complete your purchase.",
+                variant: "destructive",
+            });
+            navigate("/auth");
+            return;
+        }
+
         if (paymentMethod === 'card') {
             await handlePaymobPayment();
         } else {
@@ -351,8 +362,8 @@ const Checkout = () => {
                                         <motion.div
                                             whileHover={{ scale: 1.01 }}
                                             className={`flex items-center space-x-2 rtl:space-x-reverse rounded-xl border p-4 cursor-pointer transition-all duration-200 ${paymentMethod === 'card'
-                                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                                    : 'border-border hover:border-primary/50'
+                                                ? 'border-primary bg-primary/5 shadow-sm'
+                                                : 'border-border hover:border-primary/50'
                                                 }`}
                                         >
                                             <RadioGroupItem value="card" id="card" />
@@ -381,8 +392,8 @@ const Checkout = () => {
                                         <motion.div
                                             whileHover={{ scale: 1.01 }}
                                             className={`flex items-center space-x-2 rtl:space-x-reverse rounded-xl border p-4 cursor-pointer transition-all duration-200 ${paymentMethod === 'cod'
-                                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                                    : 'border-border hover:border-primary/50'
+                                                ? 'border-primary bg-primary/5 shadow-sm'
+                                                : 'border-border hover:border-primary/50'
                                                 }`}
                                         >
                                             <RadioGroupItem value="cod" id="cod" />
