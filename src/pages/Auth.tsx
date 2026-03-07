@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +65,7 @@ const Auth = () => {
     return () => clearInterval(interval);
   }, [lockedUntil]);
 
-  const { signIn, signUp, user, isRecovery, updatePassword, clearRecovery } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user, isRecovery, updatePassword, resetPassword, clearRecovery } = useAuth();
   const { t, dir } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -187,12 +186,8 @@ const Auth = () => {
           navigate("/");
         }
       } else if (mode === "forgot") {
-        // Send password reset email
-        // IMPORTANT: redirect URL must NOT contain # — Supabase appends its own hash
-        const baseUrl = `${window.location.origin}${window.location.pathname}`;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: baseUrl,
-        });
+        // Send password reset email via Firebase
+        const { error } = await resetPassword(email);
 
         if (error) {
           toast({
@@ -222,15 +217,7 @@ const Auth = () => {
     }
   };
 
-  const getGoogleRedirectUrl = () => {
-    const origin = window.location.origin;
-    const pathname = window.location.pathname;
-    // Return base URL without hash — Supabase will append its own hash tokens
-    if (pathname && pathname !== "/" && !pathname.endsWith("/")) {
-      return `${origin}${pathname}/`;
-    }
-    return `${origin}${pathname}`;
-  };
+  // Google sign-in is handled via Firebase popup — no redirect URL needed
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
@@ -627,21 +614,16 @@ const Auth = () => {
         onClick={async () => {
           try {
             setIsGoogleLoading(true);
-            const { error } = await supabase.auth.signInWithOAuth({
-              provider: "google",
-              options: {
-                redirectTo: getGoogleRedirectUrl(),
-                queryParams: { access_type: "offline", prompt: "consent" },
-              },
-            });
+            const { error } = await signInWithGoogle();
             if (error) throw error;
           } catch (error: any) {
-            setIsGoogleLoading(false);
             toast({
               title: t("common.error") || "Error",
               description: error.message || "Failed to sign in with Google",
               variant: "destructive",
             });
+          } finally {
+            setIsGoogleLoading(false);
           }
         }}
       >

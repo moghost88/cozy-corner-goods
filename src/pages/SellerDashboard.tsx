@@ -58,7 +58,7 @@ const SellerDashboard = () => {
             const { data, error } = await supabase
                 .from("products")
                 .select("*")
-                .eq("creator_id", user.id)
+                .eq("creator_id", user.uid)
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
@@ -93,7 +93,7 @@ const SellerDashboard = () => {
                 price: parseFloat(productPrice),
                 category: productCategory,
                 image: productImage || null,
-                creator_id: user.id,
+                creator_id: user.uid,
             });
             if (error) throw error;
             toast({ title: t("common.success"), description: t("seller.productCreated") });

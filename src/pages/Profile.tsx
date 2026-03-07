@@ -56,7 +56,7 @@ const Profile = () => {
     const { data, error } = await supabase
       .from("profiles")
       .select("display_name, avatar_url")
-      .eq("user_id", user.id)
+      .eq("user_id", user.uid)
       .single();
 
     if (data) {
@@ -72,7 +72,7 @@ const Profile = () => {
     const { data, error } = await supabase
       .from("purchases")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user.uid)
       .order("purchased_at", { ascending: false });
 
     if (data) {
@@ -87,7 +87,7 @@ const Profile = () => {
     const { error } = await supabase
       .from("profiles")
       .update({ display_name: displayName })
-      .eq("user_id", user.id);
+      .eq("user_id", user.uid);
 
     if (error) {
       toast({

@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CheckCircle2, CreditCard, Truck, ChevronLeft, ChevronRight, Loader2, Shield, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -81,7 +82,7 @@ const Checkout = () => {
                 cartTotal,
                 cartItems,
                 billingData,
-                user?.id || "guest",
+                user?.uid || "guest",
             );
 
             // Open Paymob iframe
@@ -108,7 +109,7 @@ const Checkout = () => {
         if (user) {
             const { error } = await supabase.from('purchases').insert(
                 items.map(item => ({
-                    user_id: user.id,
+                    user_id: user.uid,
                     product_id: item.id,
                     product_name: t(`product.${item.id}.name`),
                     price: item.price * item.quantity,
@@ -159,7 +160,7 @@ const Checkout = () => {
             if (user) {
                 await supabase.from('purchases').insert(
                     items.map(item => ({
-                        user_id: user.id,
+                        user_id: user.uid,
                         product_id: item.id,
                         product_name: t(`product.${item.id}.name`),
                         price: item.price * item.quantity,

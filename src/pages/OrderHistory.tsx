@@ -38,7 +38,7 @@ const OrderHistory = () => {
                 const { data, error } = await supabase
                     .from("purchases")
                     .select("*")
-                    .eq("user_id", user.id)
+                    .eq("user_id", user.uid)
                     .order("purchased_at", { ascending: false });
 
                 if (error) throw error;
