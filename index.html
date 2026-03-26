@@ -8,25 +8,78 @@
     <meta name="author" content="Cozy Corner Goods" />
     <meta name="theme-color" content="#dc2626" />
 
-    <!-- Security Headers -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accept.paymob.com https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com http://localhost:*; frame-src https://accept.paymob.com https://*.supabase.co https://*.firebaseapp.com https://accounts.google.com;" />
+    <!-- SECURITY: Prevent auth/private pages from being indexed -->
+    <meta name="robots" content="index, follow" />
 
-    <!-- Preconnect to external domains -->
+    <!-- SECURITY HEADERS -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src  'self' 'unsafe-inline' 'unsafe-eval'
+                  https://apis.google.com
+                  https://*.firebaseapp.com;
+      style-src   'self' 'unsafe-inline'
+                  https://fonts.googleapis.com;
+      font-src    'self'
+                  https://fonts.gstatic.com;
+      img-src     'self' data: blob: https:;
+      connect-src 'self'
+                  https://*.supabase.co
+                  wss://*.supabase.co
+                  https://accept.paymob.com
+                  https://*.googleapis.com
+                  https://*.firebaseio.com
+                  https://identitytoolkit.googleapis.com
+                  https://securetoken.googleapis.com
+                  https://disify.com
+                  http://localhost:*;
+      frame-src   https://accept.paymob.com
+                  https://*.supabase.co
+                  https://*.firebaseapp.com
+                  https://accounts.google.com;
+    " />
+
+    <!-- PERFORMANCE: DNS prefetch for external origins -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://apis.google.com" />
+    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+
+    <!-- PERFORMANCE: Preconnect to critical external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Preload critical fonts -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" as="style" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
 
-    <meta property="og:title" content="Cozy Corner Goods - Marketplace" />
+    <!-- PERFORMANCE: Non-blocking font load -->
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      as="style"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      />
+    </noscript>
+
+    <!-- Open Graph -->
+    <meta property="og:title"       content="Cozy Corner Goods - Marketplace" />
     <meta property="og:description" content="Discover unique home goods, kitchen items, and digital products from talented creators" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:type"        content="website" />
+    <meta property="og:image"       content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@CozyCorner" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card"  content="summary_large_image" />
+    <meta name="twitter:site"  content="@CozyCorner" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
   </head>
 

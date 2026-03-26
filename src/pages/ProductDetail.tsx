@@ -107,8 +107,13 @@ const ProductDetail = () => {
                 >
                   <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-destructive text-destructive" : ""}`} />
                 </Button>
-                <Button variant="secondary" size="icon" className="rounded-full bg-card/80 backdrop-blur-sm">
-                  <Share2 className="h-4 w-4" />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full bg-card/80 backdrop-blur-sm"
+                  aria-label={t("products.shareProduct") || "Share this product"}
+                >
+                  <Share2 className="h-4 w-4" aria-hidden />
                 </Button>
               </div>
             </div>
