@@ -1,27 +1,19 @@
-feat: improve security, accessibility, code quality, and email validation
+feat: add email verification on signup
 
-- AuthContext: remove dead isRecovery state and unused imports; wrap all
-  functions in useCallback; memoize context value with useMemo; sanitize
-  displayName; map Firebase errors to friendly messages; remove prod console.error
+- AuthContext: call sendEmailVerification automatically after every
+  email/password signup; add sendVerificationEmail() for resending;
+  add refreshUser() to force-reload Firebase User so emailVerified
+  updates in real time; expose emailVerified boolean in context;
+  Google sign-ins skip verification (already verified by Google)
 
-- Auth: remove clearRecovery/isRecovery; add password show/hide toggle;
-  add autocomplete attrs; aria-live status regions; role=radio on role
-  selector; aria-busy on buttons; noValidate on forms; skip-to-content link;
-  real-time email validation with debounced disify.com API check +
-  80+ disposable domain blocklist; live indicator on email field
+- EmailVerificationWall: new full-screen component shown to signed-in
+  users whose email is not yet verified; polls Firebase every 4 s for
+  auto-unlock; manual check button; resend button with 60-second
+  cooldown; step-by-step instructions; sign out escape hatch
 
-- Navbar: skip-to-content link; aria-label on nav; aria-expanded and
-  aria-controls on hamburger; Escape key closes menu; X icon when open;
-  hidden attr on mobile panel; sr-only label on search inputs; cart
-  button aria-label includes item count; mobile search bar
+- ProtectedRoute: added emailVerified guard — unauthenticated users
+  redirect to /auth, authenticated-but-unverified users see the
+  EmailVerificationWall, verified users see the protected content
 
-- ProtectedRoute: replace bare spinner with branded LoadingScreen
-
-- NotFound: replace a href with React Router Link; proper h1 page title;
-  dev-only console.warn for 404 routes
-
-- ProductDetail: add aria-label and aria-hidden to Share button
-
-- index.html: add X-Frame-Options SAMEORIGIN, Referrer-Policy,
-  Permissions-Policy, robots meta, dns-prefetch for Firebase and Google,
-  noscript font fallback, disify.com added to CSP connect-src
+- Auth: updated signup success toast to inform the user a verification
+  link was sent and they must verify before continuing

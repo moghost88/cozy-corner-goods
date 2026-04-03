@@ -16,6 +16,8 @@ import {
   updateProfile,
   updatePassword as firebaseUpdatePassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reload,
   signInWithPopup,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/integrations/firebase/client";
@@ -23,18 +25,21 @@ import { auth, googleProvider } from "@/integrations/firebase/client";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  emailVerified: boolean;
   signUp: (email: string, password: string, displayName?: string, role?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  sendVerificationEmail: () => Promise<{ error: Error | null }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser]       = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Subscribe to Firebase auth state — single source of truth
@@ -78,11 +83,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Set display name before sending verification so the email is personalised
       if (displayName?.trim() && newUser) {
-        // Sanitize display name: strip leading/trailing whitespace, limit length
         const sanitized = displayName.trim().slice(0, 100);
         await updateProfile(newUser, { displayName: sanitized });
       }
+
+      // Send Firebase email verification immediately after account creation
+      await sendEmailVerification(newUser);
+
       return { error: null };
     } catch (err: unknown) {
       return { error: mapFirebaseError(err) };
@@ -100,10 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = useCallback(async () => {
     try {
+      // Google accounts are pre-verified by Google — no email verification needed
       await signInWithPopup(auth, googleProvider);
       return { error: null };
     } catch (err: unknown) {
-      // Only log the error code in development — never log credentials or tokens
       if (import.meta.env.DEV) {
         const code = (err as any)?.code;
         console.warn("[Auth] Google sign-in failed:", code);
@@ -137,19 +147,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  /** Re-send the Firebase verification email to the current user. */
+  const sendVerificationEmail = useCallback(async () => {
+    try {
+      if (!auth.currentUser) {
+        return { error: new Error("No user is currently signed in.") };
+      }
+      await sendEmailVerification(auth.currentUser);
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: mapFirebaseError(err) };
+    }
+  }, []);
+
+  /**
+   * Force-reload the Firebase User object so `emailVerified` reflects the
+   * latest value from the server (called when user returns after clicking
+   * the link in their inbox).
+   */
+  const refreshUser = useCallback(async () => {
+    if (!auth.currentUser) return;
+    await reload(auth.currentUser);
+    // Trigger a state update so consumers re-render with the new emailVerified value
+    setUser({ ...auth.currentUser });
+  }, []);
+
   // Memoize context value to prevent unnecessary consumer re-renders
   const value = useMemo<AuthContextType>(
     () => ({
       user,
       loading,
+      // Google users are always verified; email/password users must verify
+      emailVerified: user?.emailVerified ?? false,
       signUp,
       signIn,
       signInWithGoogle,
       signOut: signOutUser,
       updatePassword: updatePasswordFn,
       resetPassword,
+      sendVerificationEmail,
+      refreshUser,
     }),
-    [user, loading, signUp, signIn, signInWithGoogle, signOutUser, updatePasswordFn, resetPassword],
+    [user, loading, signUp, signIn, signInWithGoogle, signOutUser, updatePasswordFn, resetPassword, sendVerificationEmail, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -172,20 +211,20 @@ function mapFirebaseError(err: unknown): Error {
   const code = (err as any)?.code ?? "";
 
   const messages: Record<string, string> = {
-    "auth/email-already-in-use": "This email is already registered. Please sign in instead.",
-    "auth/invalid-email": "Invalid email address.",
-    "auth/operation-not-allowed": "This sign-in method is not enabled.",
-    "auth/weak-password": "Password is too weak. Please use at least 6 characters.",
-    "auth/user-disabled": "This account has been disabled. Please contact support.",
-    "auth/user-not-found": "Invalid email or password.",
-    "auth/wrong-password": "Invalid email or password.",
-    "auth/invalid-credential": "Invalid email or password.",
-    "auth/too-many-requests": "Too many failed attempts. Please try again in a few minutes.",
-    "auth/popup-closed-by-user": "Sign-in was cancelled. Please try again.",
+    "auth/email-already-in-use":    "This email is already registered. Please sign in instead.",
+    "auth/invalid-email":           "Invalid email address.",
+    "auth/operation-not-allowed":   "This sign-in method is not enabled.",
+    "auth/weak-password":           "Password is too weak. Please use at least 6 characters.",
+    "auth/user-disabled":           "This account has been disabled. Please contact support.",
+    "auth/user-not-found":          "Invalid email or password.",
+    "auth/wrong-password":          "Invalid email or password.",
+    "auth/invalid-credential":      "Invalid email or password.",
+    "auth/too-many-requests":       "Too many failed attempts. Please try again in a few minutes.",
+    "auth/popup-closed-by-user":    "Sign-in was cancelled. Please try again.",
     "auth/cancelled-popup-request": "Sign-in was cancelled.",
-    "auth/popup-blocked": "The sign-in popup was blocked. Please allow popups for this site.",
-    "auth/requires-recent-login": "Please sign in again to perform this action.",
-    "auth/network-request-failed": "A network error occurred. Please check your connection.",
+    "auth/popup-blocked":           "The sign-in popup was blocked. Please allow popups for this site.",
+    "auth/requires-recent-login":   "Please sign in again to perform this action.",
+    "auth/network-request-failed":  "A network error occurred. Please check your connection.",
   };
 
   return new Error(messages[code] ?? "An unexpected error occurred. Please try again.");

@@ -287,7 +287,11 @@ const Auth = () => {
             variant: "destructive",
           });
         } else {
-          toast({ title: t("auth.accountCreated") || "Account Created", description: t("auth.welcomeToStore") || "Welcome to the store!" });
+          toast({
+            title: t("auth.accountCreated") || "Account Created! 🎉",
+            description: t("auth.verifyEmailPrompt") || "A verification link has been sent to your email. Please check your inbox to continue.",
+            duration: 6000,
+          });
           navigate("/");
         }
 
