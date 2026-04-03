@@ -170,16 +170,12 @@ const Auth = () => {
         if (!res.ok) throw new Error("API error");
         const data: { format: boolean; disposable: boolean; mx: boolean } = await res.json();
 
-        if (!data.format) {
+        if (data.disposable) {
           setEmailCheckStatus("invalid");
-          setEmailCheckMsg("Invalid email format.");
-        } else if (data.disposable) {
-          setEmailCheckStatus("invalid");
-          setEmailCheckMsg("Disposable emails are not allowed.");
-        } else if (!data.mx) {
-          setEmailCheckStatus("invalid");
-          setEmailCheckMsg("This domain has no mail server. Check for typos.");
+          setEmailCheckMsg("Disposable / temporary emails are not allowed.");
         } else {
+          // Format is valid and not disposable — accept it.
+          // Firebase will handle any delivery failures on its end.
           setEmailCheckStatus("valid");
           setEmailCheckMsg("Email looks good!");
         }

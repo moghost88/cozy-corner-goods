@@ -1,19 +1,7 @@
-feat: add email verification on signup
+fix: remove unreliable MX record check from email validation
 
-- AuthContext: call sendEmailVerification automatically after every
-  email/password signup; add sendVerificationEmail() for resending;
-  add refreshUser() to force-reload Firebase User so emailVerified
-  updates in real time; expose emailVerified boolean in context;
-  Google sign-ins skip verification (already verified by Google)
+The disify.com mx field returned false for valid providers like Gmail
+and Hotmail, causing a false "no mail server" error for real users.
 
-- EmailVerificationWall: new full-screen component shown to signed-in
-  users whose email is not yet verified; polls Firebase every 4 s for
-  auto-unlock; manual check button; resend button with 60-second
-  cooldown; step-by-step instructions; sign out escape hatch
-
-- ProtectedRoute: added emailVerified guard — unauthenticated users
-  redirect to /auth, authenticated-but-unverified users see the
-  EmailVerificationWall, verified users see the protected content
-
-- Auth: updated signup success toast to inform the user a verification
-  link was sent and they must verify before continuing
+Now only block domains the API explicitly marks as disposable.
+Firebase handles actual delivery failures on its end.
