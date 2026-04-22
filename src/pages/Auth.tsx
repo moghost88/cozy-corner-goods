@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, ArrowRight, Mail, Lock, User,
   Loader2, KeyRound, CheckCircle2, ShieldCheck,
-  Store, ShoppingBag, Eye, EyeOff, XCircle, CheckCircle,
+  Store, ShoppingBag, Eye, EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -25,43 +25,12 @@ const authSchema = z.object({
 });
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
-type EmailCheckStatus = "idle" | "checking" | "valid" | "invalid";
 
 const slideVariants = {
   initial: { opacity: 0, x: 20 },
   animate: { opacity: 1, x: 0 },
   exit:    { opacity: 0, x: -20 },
 };
-
-// ---------------------------------------------------------------------------
-// Known disposable / throwaway email providers (client-side blocklist)
-// ---------------------------------------------------------------------------
-const DISPOSABLE_DOMAINS = new Set([
-  "mailinator.com", "guerrillamail.com", "tempmail.com", "throwam.com",
-  "sharklasers.com", "guerrillamailblock.com", "grr.la", "guerrillamail.info",
-  "guerrillamail.biz", "guerrillamail.de", "guerrillamail.net", "guerrillamail.org",
-  "spam4.me", "trashmail.com", "trashmail.me", "trashmail.net", "trashmail.at",
-  "trashmail.io", "dispostable.com", "fakeinbox.com", "yopmail.com", "yopmail.fr",
-  "cool.fr.nf", "jetable.fr.nf", "nospam.ze.tc", "nomail.xl.cx", "mega.zik.dj",
-  "speed.1s.fr", "courriel.fr.nf", "moncourrier.fr.nf", "monemail.fr.nf",
-  "monmail.fr.nf", "10minutemail.com", "10minutemail.net", "10minutemail.org",
-  "10minutemail.de", "10minutemail.co.uk", "10minemail.com", "minutemail.com",
-  "mailnull.com", "maildrop.cc", "getairmail.com", "filzmail.com", "throwam.com",
-  "spamgourmet.com", "spamgourmet.net", "spamgourmet.org", "spamgourmet.com",
-  "tempr.email", "discard.email", "spamspot.com", "spamfree24.org", "spamfree24.de",
-  "spamfree24.eu", "spamfree24.info", "spamfree24.net", "spamfree.eu",
-  "mailexpire.com", "spaminator.de", "spam.la", "binkmail.com", "bobmail.info",
-  "chammy.info", "devnullmail.com", "hurting.com", "jetable.com", "jetable.net",
-  "jetable.org", "koszmail.pl", "maileater.com", "mailimate.com", "mailnew.com",
-  "mailsiphon.com", "mailzilla.com", "meinspamschutz.de", "meltmail.com",
-  "mierdamail.com", "myspamless.com", "netmails.net", "odaymail.com",
-  "proxymail.eu", "putthisinyourspamdatabase.com", "rklips.com", "rmqkr.net",
-  "safetypost.de", "sogetthis.com", "soodonims.com", "spambeater.de",
-  "tempinbox.com", "tempomail.fr", "thanksnospam.info", "throwam.com",
-  "twinmail.de", "uggsrock.com", "webemail.me", "xagloo.com", "yuurok.com",
-  "zippymail.info", "0-mail.com", "027168.com", "0815.ru", "0clickemail.com",
-  "0wnd.net", "0wnd.org", "10mail.org",
-]);
 
 // ---------------------------------------------------------------------------
 // Component
@@ -80,10 +49,7 @@ const Auth = () => {
   const [role, setRole]                     = useState<"client" | "seller">("client");
   const [errors, setErrors]                 = useState<Record<string, string>>({});
 
-  // Email real-time validation
-  const [emailCheckStatus, setEmailCheckStatus] = useState<EmailCheckStatus>("idle");
-  const [emailCheckMsg, setEmailCheckMsg]       = useState<string>("");
-  const emailCheckController = useRef<AbortController | null>(null);
+
 
   // SECURITY: Client-side rate limiting (5 attempts → 5 min lockout)
   const [submitCount, setSubmitCount] = useState(0);
@@ -122,76 +88,7 @@ const Auth = () => {
     }
   }, [user, navigate, mode]);
 
-  // ---------------------------------------------------------------------------
-  // Real email validation — debounced, runs after format is valid
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    // Only validate when the email field is visible
-    if (mode === "reset") return;
 
-    // Reset when field is empty
-    if (!email) {
-      setEmailCheckStatus("idle");
-      setEmailCheckMsg("");
-      return;
-    }
-
-    // Quick format check — don't bother API if format is wrong
-    const formatOk = z.string().email().safeParse(email).success;
-    if (!formatOk) {
-      setEmailCheckStatus("idle");
-      setEmailCheckMsg("");
-      return;
-    }
-
-    // 1️⃣ Instant client-side disposable check
-    const domain = email.split("@")[1]?.toLowerCase();
-    if (domain && DISPOSABLE_DOMAINS.has(domain)) {
-      setEmailCheckStatus("invalid");
-      setEmailCheckMsg("Disposable emails are not allowed.");
-      return;
-    }
-
-    // 2️⃣ Debounced API check (800 ms)
-    setEmailCheckStatus("checking");
-    setEmailCheckMsg("");
-
-    const timer = setTimeout(async () => {
-      // Cancel any in-flight request
-      emailCheckController.current?.abort();
-      const controller = new AbortController();
-      emailCheckController.current = controller;
-
-      try {
-        const res = await fetch(
-          `https://disify.com/api/email/${encodeURIComponent(email)}`,
-          { signal: controller.signal },
-        );
-        if (!res.ok) throw new Error("API error");
-        const data: { format: boolean; disposable: boolean; mx: boolean } = await res.json();
-
-        if (data.disposable) {
-          setEmailCheckStatus("invalid");
-          setEmailCheckMsg("Disposable / temporary emails are not allowed.");
-        } else {
-          // Format is valid and not disposable — accept it.
-          // Firebase will handle any delivery failures on its end.
-          setEmailCheckStatus("valid");
-          setEmailCheckMsg("Email looks good!");
-        }
-      } catch (err: any) {
-        if (err.name === "AbortError") return; // cancelled — ignore
-        // API unreachable → fall back silently (don't block the user)
-        setEmailCheckStatus("idle");
-        setEmailCheckMsg("");
-      }
-    }, 800);
-
-    return () => {
-      clearTimeout(timer);
-      emailCheckController.current?.abort();
-    };
-  }, [email, mode]);
 
   // ---------------------------------------------------------------------------
   // Validation
@@ -222,13 +119,6 @@ const Auth = () => {
     }
 
     setErrors(fieldErrors);
-
-    // Block submission if email failed real-time validation
-    if (mode !== "reset" && emailCheckStatus === "invalid") {
-      setErrors((prev) => ({ ...prev, email: emailCheckMsg || "Invalid email address." }));
-      return false;
-    }
-
     return Object.keys(fieldErrors).length === 0;
   };
 
@@ -238,15 +128,6 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
-    // Block if the real-time check is still in progress
-    if (emailCheckStatus === "checking") {
-      toast({
-        title: "Checking email…",
-        description: "Please wait while we verify your email address.",
-      });
-      return;
-    }
 
     if (isLocked) {
       toast({
@@ -636,37 +517,14 @@ const Auth = () => {
               placeholder={t("auth.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`ps-10 pe-10 transition-colors ${
-                emailCheckStatus === "valid"   ? "border-green-500 focus-visible:ring-green-500" :
-                emailCheckStatus === "invalid" ? "border-destructive focus-visible:ring-destructive" : ""
-              }`}
+              className="ps-10"
               required
               maxLength={254}
               autoComplete="email"
-              aria-invalid={emailCheckStatus === "invalid"}
-              aria-describedby="email-status"
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
-            {/* Live status icon */}
-            <div className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              {emailCheckStatus === "checking" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />}
-              {emailCheckStatus === "valid"    && <CheckCircle className="h-4 w-4 text-green-500" aria-hidden />}
-              {emailCheckStatus === "invalid"  && <XCircle className="h-4 w-4 text-destructive" aria-hidden />}
-            </div>
           </div>
-          {/* Status message — always rendered for aria-live updates */}
-          <p
-            id="email-status"
-            className={`text-sm ${
-              emailCheckStatus === "valid"   ? "text-green-600 dark:text-green-400" :
-              emailCheckStatus === "invalid" ? "text-destructive" :
-              "text-muted-foreground"
-            }`}
-            role="status"
-            aria-live="polite"
-          >
-            {emailCheckStatus === "checking" ? (t("auth.checkingEmail") || "Verifying email…") :
-             emailCheckMsg || (errors.email ?? "")}
-          </p>
+          {errors.email && <p id="email-error" className="text-sm text-destructive" role="alert">{errors.email}</p>}
         </div>
 
         {/* Password */}

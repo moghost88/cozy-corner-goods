@@ -1,7 +1,12 @@
-fix: remove unreliable MX record check from email validation
+fix: remove buggy live email check, keep Firebase verification flow
 
-The disify.com mx field returned false for valid providers like Gmail
-and Hotmail, causing a false "no mail server" error for real users.
+Removed all disify.com API code and the disposable domain blocklist
+from Auth.tsx. They caused false positives (blocking real Gmail/Hotmail
+addresses) and were unreliable.
 
-Now only block domains the API explicitly marks as disposable.
-Firebase handles actual delivery failures on its end.
+Email validation is now:
+1. Zod format check on submit (instant, reliable)
+2. Firebase sendEmailVerification after signup (proves the inbox is real)
+   - User gets a link in their inbox
+   - Must click it before accessing the app
+   - ProtectedRoute + EmailVerificationWall enforce this
